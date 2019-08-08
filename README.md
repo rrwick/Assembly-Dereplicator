@@ -6,7 +6,7 @@ This repo contains a stand-alone Python script to solve a common problem I ran i
 
 As an example, imagine that you had 500 genome assemblies for a particular bacterial species and wanted to do some analysis on them, perhaps building a phylogeny. You knew that there was redundancy in this set, i.e. some of your genomes were very similar to each other. So instead of doing the analysis on all 500 assemblies, it might make more sense to reduce your set of assemblies to a smaller set where everything is sufficiently unique.
 
-<p align="center"><img src="images/trees.png" alt="Trees" width="90%"></p>
+<p align="center"><img src="images/trees.png" alt="Trees" width="70%"></p>
 
 
 
