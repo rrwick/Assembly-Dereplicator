@@ -159,7 +159,6 @@ def create_graph_from_distances(pairwise_distances, threshold):
     assemblies = set()
     graph = collections.defaultdict(set)
     all_connections = collections.defaultdict(set)
-    count = 0
     for line in pairwise_distances:
         parts = line.split('\t')
         assembly_1 = parts[0]
@@ -174,7 +173,6 @@ def create_graph_from_distances(pairwise_distances, threshold):
         if distance < threshold:
             graph[assembly_1].add(assembly_2)
             graph[assembly_2].add(assembly_1)
-        count += 1
     assemblies = sorted(assemblies)
     assembly_count = len(assemblies)    
     for assembly in assemblies:  # sanity check: make sure we have all the connections
