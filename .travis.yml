@@ -6,11 +6,9 @@ python:
   - '3.6'
 before_install:
   - sudo apt-get install -y mash
-install:
-  - pip3 install -e .
 before_script:
   - pip3 install pytest
 script:
-  - coverage run -m unittest
+  - coverage run -m pytest
 after_success:
   - coveralls
