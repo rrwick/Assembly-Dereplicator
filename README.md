@@ -4,7 +4,7 @@ __Ryan R. Wick<sup>1</sup> and Kathryn E. Holt<sup>1,2</sup>__
 <br>
 <sub>1. Department of Infectious Diseases, Central Clinical School, Monash University, Melbourne, Victoria 3004, Australia<br>2. London School of Hygiene & Tropical Medicine, London WC1E 7HT, UK</sub>
 
-[![License GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+[![Build Status](https://travis-ci.com/rrwick/Assembly-dereplicator.svg?branch=master)](https://travis-ci.com/rrwick/Assembly-dereplicator) [![Coverage Status](https://coveralls.io/repos/github/rrwick/Assembly-Dereplicator/badge.svg?branch=master)](https://coveralls.io/github/rrwick/Assembly-Dereplicator?branch=master) [![License GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 
 ## Table of contents
