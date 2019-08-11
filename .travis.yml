@@ -8,6 +8,7 @@ before_install:
   - sudo apt-get install -y mash
 before_script:
   - pip3 install pytest
+  - pip3 install coveralls
 script:
   - coverage run -m pytest
 after_success:
