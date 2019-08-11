@@ -30,7 +30,7 @@ import tempfile
 __version__ = '0.1.0'
 
 
-def get_arguments():
+def get_arguments(args):
     parser = MyParser(description='Assembly dereplicator', add_help=False,
                       formatter_class=MyHelpFormatter)
 
@@ -58,12 +58,12 @@ def get_arguments():
                             version='Dereplicate assemblies v' + __version__,
                             help="Show program's version number and exit")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     return args
 
 
-def main():
-    args = get_arguments()
+def main(args=None):
+    args = get_arguments(args)
     random.seed(0)
     all_assemblies = find_all_assemblies(args.in_dir)
     initial_count = len(all_assemblies)
@@ -286,11 +286,7 @@ class MyParser(argparse.ArgumentParser):
 
 
 class MyHelpFormatter(argparse.HelpFormatter):
-    """
-    This is a custom formatter class for argparse. It allows for some custom formatting,
-    in particular for the help texts with multiple options (like bridging mode and verbosity level).
-    http://stackoverflow.com/questions/3853722
-    """
+
     def __init__(self, prog):
         terminal_width = shutil.get_terminal_size().columns
         os.environ['COLUMNS'] = str(terminal_width)
@@ -320,72 +316,27 @@ class MyHelpFormatter(argparse.HelpFormatter):
             heading = BOLD + heading + END_FORMATTING
         super().start_section(heading)
 
-    def _split_lines(self, text, width):
-        """
-        Override this method to add special behaviour for help texts that start with:
-          'R|' - loop text one option per line
-        """
-        if text.startswith('R|'):
-            text_lines = text[2:].splitlines()
-            wrapped_text_lines = []
-            for line in text_lines:
-                if len(line) <= width:
-                    wrapped_text_lines.append(line)
-                else:
-                    wrap_column = 2
-                    line_parts = line.split(', ')
-                    join = ','
-                    current_line = line_parts[0]
-                    for part in line_parts[1:]:
-                        if len(current_line) + len(join) + 1 + len(part) <= width:
-                            current_line += join + ' ' + part
-                        else:
-                            wrapped_text_lines.append(current_line + join)
-                            current_line = ' ' * wrap_column + part
-                    wrapped_text_lines.append(current_line)
-            return wrapped_text_lines
-        else:
-            return argparse.HelpFormatter._split_lines(self, text, width)
-
-    def _fill_text(self, text, width, indent):
-        if text.startswith('R|'):
-            return ''.join(indent + line for line in text[2:].splitlines(keepends=True))
-        else:
-            return argparse.HelpFormatter._fill_text(self, text, width, indent)
-
     def _format_action(self, action):
         """
         Override this method to make help descriptions dim.
         """
-        # determine the required width and the entry label
-        help_position = min(self._action_max_length + 2,
-                            self._max_help_position)
+        help_position = min(self._action_max_length + 2, self._max_help_position)
         help_width = self._width - help_position
         action_width = help_position - self._current_indent - 2
         action_header = self._format_action_invocation(action)
-
-        # ho nelp; start on same line and add a final newline
         if not action.help:
             tup = self._current_indent, '', action_header
             action_header = '%*s%s\n' % tup
             indent_first = 0
-
-        # short action name; start on the same line and pad two spaces
         elif len(action_header) <= action_width:
             tup = self._current_indent, '', action_width, action_header
             action_header = '%*s%-*s  ' % tup
             indent_first = 0
-
-        # long action name; start on the next line
         else:
             tup = self._current_indent, '', action_header
             action_header = '%*s%s\n' % tup
             indent_first = help_position
-
-        # collect the pieces of the action help
         parts = [action_header]
-
-        # if there was help for the action, add lines of help text
         if action.help:
             help_text = self._expand_help(action)
             help_lines = self._split_lines(help_text, help_width)
@@ -397,16 +348,10 @@ class MyHelpFormatter(argparse.HelpFormatter):
                 if self.colours > 8:
                     line = DIM + line + END_FORMATTING
                 parts.append('%*s%s\n' % (help_position, '', line))
-
-        # or add a newline if the description doesn't end with one
         elif not action_header.endswith('\n'):
             parts.append('\n')
-
-        # if there are any sub-actions, add their help as well
         for subaction in self._iter_indented_subactions(action):
             parts.append(self._format_action(subaction))
-
-        # return a single string
         return self._join_parts(parts)
 
 
