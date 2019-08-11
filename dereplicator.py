@@ -216,7 +216,7 @@ def get_assembly_n50(filename):
 
 def get_contig_lengths(filename):
     lengths = []
-    with get_open_func(filename)(filename, 'rt') as fasta_file:
+    with get_open_func(filename)(str(filename), 'rt') as fasta_file:
         name = ''
         sequence = ''
         for line in fasta_file:
@@ -245,7 +245,7 @@ def get_compression_type(filename):
                   'zip': (b'\x50', b'\x4b', b'\x03', b'\x04')}
     max_len = max(len(x) for x in magic_dict)
 
-    unknown_file = open(filename, 'rb')
+    unknown_file = open(str(filename), 'rb')
     file_start = unknown_file.read(max_len)
     unknown_file.close()
     compression_type = 'plain'
