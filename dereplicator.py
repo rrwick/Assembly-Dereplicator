@@ -50,6 +50,8 @@ def get_arguments(args):
                                    'many assemblies')
     setting_args.add_argument('--threads', type=int, default=get_default_thread_count(),
                               help='Number of CPU threads for Mash')
+    setting_args.add_argument('--verbose', action='store_true',
+                              help='Display more clustering information')
 
     other_args = parser.add_argument_group('Other')
     other_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
@@ -78,7 +80,7 @@ def main(args=None):
         random.shuffle(all_assemblies)
         batch_assemblies = all_assemblies[:args.batch_size]
         newly_excluded = dereplicate(batch_assemblies, args.threads, args.threshold,
-                                     args.sketch_size)
+                                     args.sketch_size, args.verbose)
 
         if len(newly_excluded) == 0:
             print('  no clusters found\n')
@@ -94,7 +96,7 @@ def main(args=None):
     else:
         print('Running a final dereplication on all {} assemblies...'.format(len(all_assemblies)))
     excluded_assemblies |= dereplicate(all_assemblies, args.threads, args.threshold,
-                                       args.sketch_size)
+                                       args.sketch_size, args.verbose)
     all_assemblies = [x for x in all_assemblies if x not in excluded_assemblies]
 
     print('\nFinal dereplication: {:,} / {:,} assemblies'.format(len(all_assemblies),
@@ -105,7 +107,7 @@ def main(args=None):
     print()
 
 
-def dereplicate(all_assemblies, threads, threshold, sketch_size):
+def dereplicate(all_assemblies, threads, threshold, sketch_size, verbose):
     all_assemblies = sorted(all_assemblies)
     excluded_assemblies = set()
 
@@ -119,9 +121,18 @@ def dereplicate(all_assemblies, threads, threshold, sketch_size):
             if len(assemblies) > 1:
                 n50, representative = sorted([(get_assembly_n50(a), a) for a in assemblies])[-1]
                 rep_name = os.path.basename(representative)
-                print('  cluster of {} assemblies: {} (N50 = {:,})'.format(len(assemblies),
-                                                                           rep_name, n50))
+                if verbose:
+                    print(os.path.basename(representative) + '*,', end='')
+                    non_rep_assemblies = [os.path.basename(a) for a in assemblies
+                                          if a != representative]
+                    print(','.join(non_rep_assemblies))
+                else:
+                    print('  cluster of {} assemblies: {} (N50 = {:,})'.format(len(assemblies),
+                                                                               rep_name, n50))
                 excluded_assemblies |= set([x for x in assemblies if x != representative])
+            elif verbose:
+                assert len(assemblies) == 1
+                print(os.path.basename(assemblies[0]) + '*')
 
     return excluded_assemblies
 
