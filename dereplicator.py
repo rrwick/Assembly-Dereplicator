@@ -45,9 +45,9 @@ def get_arguments(args):
                               help='Mash distance clustering threshold')
     setting_args.add_argument('--sketch_size', type=int, default=10000,
                               help='Mash assembly sketch size')
-    setting_args.add_argument('--batch_size', type=int, default=500,
+    setting_args.add_argument('--batch_size', type=int, default=100000,
                               help='Dereplication iterations will occur on random batches of this '
-                                   'many assemblies')
+                                   'many assemblies - smaller numbers will reduce memory usage')
     setting_args.add_argument('--threads', type=int, default=get_default_thread_count(),
                               help='Number of CPU threads for Mash')
 
@@ -174,7 +174,7 @@ def create_graph_from_distances(pairwise_distances, threshold):
             graph[assembly_1].add(assembly_2)
             graph[assembly_2].add(assembly_1)
     assemblies = sorted(assemblies)
-    assembly_count = len(assemblies)    
+    assembly_count = len(assemblies)
     for assembly in assemblies:  # sanity check: make sure we have all the connections
         assert len(all_connections[assembly]) == assembly_count - 1
     return assemblies, graph
