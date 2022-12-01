@@ -45,7 +45,7 @@ def get_arguments(args):
                               help='Mash distance clustering threshold')
     setting_args.add_argument('--sketch_size', type=int, default=10000,
                               help='Mash assembly sketch size')
-    setting_args.add_argument('--batch_size', type=int, default=100000,
+    setting_args.add_argument('--batch_size', type=int, default=1000000,
                               help='Dereplication iterations will occur on random batches of this '
                                    'many assemblies - smaller numbers will reduce memory usage')
     setting_args.add_argument('--threads', type=int, default=get_default_thread_count(),

@@ -68,7 +68,9 @@ The basic idea of this script is to cluster assemblies and choose a single repre
 
 ### Batches
 
-Despite Mash being very efficient, an all-vs-all comparison can be cumbersome when you have a large number of assemblies (e.g. ten thousand or more). This script therefore clusters in smaller randomly-selected batches (500 at a time by default but configurable with `--batch_size`). This is repeated iteratively until an iteration fails to remove any assemblies. When this happens, the script assumes that most replication has been cleared out and conducts a final dereplication round with all remaining assemblies.
+Despite Mash being very efficient, an all-vs-all comparison scales _O_(_n_<sup>2</sup>) and can be cumbersome when you have a large number of assemblies (e.g. ten thousand or more). If you need to limit memory usage, this script can run in smaller randomly-selected batches, repeated iteratively. When an iteration fails to remove any assemblies, the script assumes that most replication has been cleared out and conducts a final dereplication round with all remaining assemblies.
+
+You can use this feature with the `--batch_size` option, e.g. `--batch_size 500`. The default value is very high (`--batch_size 1000000`) to effectively turn off batching.
 
 I added this batch-based dereplication mainly to help with RAM usage on large datasets, especially if the assembly collection contains a lot of redundancy. But it can also help a bit with a common criticism of single-linkage clustering: long thin clusters. By clustering subsets at a time, it increases the chance that large clusters will be broken apart. Note that this means changing the batch size may change the number of dereplicated assemblies.
 
@@ -100,7 +102,7 @@ Settings:
   --threshold THRESHOLD      Mash distance clustering threshold (default: 0.005)
   --sketch_size SKETCH_SIZE  Mash assembly sketch size (default: 10000)
   --batch_size BATCH_SIZE    Dereplication iterations will occur on random batches of
-                             this many assemblies (default: 500)
+                             this many assemblies (default: 1000000)
   --threads THREADS          Number of CPU threads for Mash (default: 12)
 
 Other:
@@ -115,7 +117,7 @@ Positional arguments:
 Settings:
 * `--threshold` is the Mash distance below which two assemblies will cluster together and is the most important parameter. Mash distance roughly corresponds to one minus average nucleotide identity, so a threshold of 0.005 (the default) means that assemblies closer than \~99.5% identity will cluster together. Setting it to a small value (e.g. 0.001) will result in more dereplicated assemblies – i.e. only very close relatives will cluster. Setting it to a large value (e.g. 0.02) will result in fewer dereplicated assemblies, perhaps just one per species.
 * `--sketch_size` controls the [Mash sketch size](https://mash.readthedocs.io/en/latest/sketches.html#sketch-size). A smaller value (e.g. 1000) will make the process faster but slightly less accurate.
-* `--batch_size` controls how many assemblies will be clustered at once (see [Batches](#batches)). You probably don't need to adjust this, but it might be worth playing with if you are trying to minimise RAM usage. If you have plenty of RAM and just want to cluster in a single iteration, set this to a very high number (more than your number of assemblies).
+* `--batch_size` controls how many assemblies will be clustered at once (see [Batches](#batches)). If set to a value larger than your number of assemblies, then dereplication will simply occur in a single iteration.
 * `--threads` controls how many threads Mash uses for its sketching and distances. Mash scales well in parallel, so use lots of threads if you have them!
 
 
