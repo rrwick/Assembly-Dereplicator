@@ -76,7 +76,7 @@ def main(args=None):
         if len(all_assemblies) <= args.batch_size:
             break
 
-        print('Running dereplication on a random batch of {} assemblies...'.format(args.batch_size))
+        print(f'Running dereplication on a random batch of {args.batch_size} assemblies...')
         random.shuffle(all_assemblies)
         batch_assemblies = all_assemblies[:args.batch_size]
         newly_excluded = dereplicate(batch_assemblies, args.threads, args.threshold,
@@ -89,19 +89,18 @@ def main(args=None):
             excluded_assemblies |= newly_excluded
 
         all_assemblies = [x for x in all_assemblies if x not in excluded_assemblies]
-        print('{:,} assemblies remain\n'.format(len(all_assemblies)))
+        print(f'{len(all_assemblies):,} assemblies remain\n')
 
     if initial_count <= args.batch_size:
-        print('Running dereplication on all {} assemblies...'.format(len(all_assemblies)))
+        print(f'Running dereplication on all {len(all_assemblies)} assemblies...')
     else:
-        print('Running a final dereplication on all {} assemblies...'.format(len(all_assemblies)))
+        print(f'Running a final dereplication on all {len(all_assemblies)} assemblies...')
     excluded_assemblies |= dereplicate(all_assemblies, args.threads, args.threshold,
                                        args.sketch_size, args.verbose)
     all_assemblies = [x for x in all_assemblies if x not in excluded_assemblies]
 
-    print('\nFinal dereplication: {:,} / {:,} assemblies'.format(len(all_assemblies),
-                                                                 initial_count))
-    print('Copying dereplicated assemblies to {}'.format(args.out_dir))
+    print(f'\nFinal dereplication: {len(all_assemblies):,} / {initial_count:,} assemblies')
+    print(f'Copying dereplicated assemblies to {args.out_dir}')
     for a in all_assemblies:
         shutil.copy(a, args.out_dir)
     print()
@@ -127,8 +126,7 @@ def dereplicate(all_assemblies, threads, threshold, sketch_size, verbose):
                                           if a != representative]
                     print(','.join(non_rep_assemblies))
                 else:
-                    print('  cluster of {} assemblies: {} (N50 = {:,})'.format(len(assemblies),
-                                                                               rep_name, n50))
+                    print(f'  cluster of {len(assemblies)} assemblies: {rep_name} (N50 = {n50:,})')
                 excluded_assemblies |= set([x for x in assemblies if x != representative])
             elif verbose:
                 assert len(assemblies) == 1
@@ -151,14 +149,14 @@ def pairwise_mash_distances(mash_sketch, threads):
 
 
 def find_all_assemblies(in_dir):
-    print('\nLooking for assembly files in {}:'.format(in_dir))
+    print(f'\nLooking for assembly files in {in_dir}:')
     all_assemblies = [str(x) for x in sorted(pathlib.Path(in_dir).glob('**/*'))
                       if x.is_file()]
     all_assemblies = [x for x in all_assemblies if
                       x.endswith('.fasta') or x.endswith('.fasta.gz') or
                       x.endswith('.fna') or x.endswith('.fna.gz') or
                       x.endswith('.fa') or x.endswith('.fa.gz')]
-    print('found {:,} files\n'.format(len(all_assemblies)))
+    print(f'found {len(all_assemblies):,} files\n')
     return all_assemblies
 
 
@@ -313,10 +311,9 @@ class MyHelpFormatter(argparse.HelpFormatter):
         help_text = action.help
         if action.default != argparse.SUPPRESS and action.default is not None:
             if 'default' not in help_text.lower():
-                help_text += ' (default: {})'.format(action.default)
+                help_text += f' (default: {action.default})'
             elif 'default: DEFAULT' in help_text:
-                help_text = help_text.replace('default: DEFAULT',
-                                              'default: {}'.format(action.default))
+                help_text = help_text.replace('default: DEFAULT', f'default: {action.default}')
         return help_text
 
     def start_section(self, heading):
