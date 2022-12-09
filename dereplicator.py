@@ -40,9 +40,17 @@ def get_arguments(args):
     required_args.add_argument('out_dir', type=str,
                                help='Directory where dereplicated assemblies will be copied')
 
+    threshold_args = parser.add_argument_group('Threshold-based clustering')
+    threshold_args.add_argument('--threshold', type=float,
+                                help='Mash distance clustering threshold')
+
+    threshold_args = parser.add_argument_group('Count-based clustering')
+    threshold_args.add_argument('--count', type=int,
+                                help='Target assembly count')
+    threshold_args.add_argument('--starting_assembly', type=str,
+                                help='Starting assembly (will be included in cluster)')
+
     setting_args = parser.add_argument_group('Settings')
-    setting_args.add_argument('--threshold', type=float, default=0.005,
-                              help='Mash distance clustering threshold')
     setting_args.add_argument('--sketch_size', type=int, default=10000,
                               help='Mash assembly sketch size')
     setting_args.add_argument('--threads', type=int, default=get_default_thread_count(),
@@ -54,7 +62,7 @@ def get_arguments(args):
     other_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                             help='Show this help message and exit')
     other_args.add_argument('--version', action='version',
-                            version='Dereplicate assemblies v' + __version__,
+                            version='Assembly dereplicator v' + __version__,
                             help="Show program's version number and exit")
 
     args = parser.parse_args(args)
@@ -63,17 +71,32 @@ def get_arguments(args):
 
 def main(args=None):
     args = get_arguments(args)
+    check_args(args)
     random.seed(0)
     all_assemblies = find_all_assemblies(args.in_dir)
     initial_count = len(all_assemblies)
     os.makedirs(args.out_dir, exist_ok=True)
-    derep_assemblies = threshold_based_dereplication(all_assemblies, args)
+    if args.threshold is not None:
+        derep_assemblies = threshold_based_dereplication(all_assemblies, args)
+    else:  # args.count is not None
+        derep_assemblies = count_based_dereplication(all_assemblies, args)
     copy_to_output_dir(derep_assemblies, initial_count, args)
 
 
+def check_args(args):
+    if args.threshold is None and args.count is None:
+        sys.exit('Error: you must supply a value for either --threshold or --count')
+    if args.threshold is not None and args.count is not None:
+        sys.exit('Error: you cannot use both --threshold and --count')
+    if args.threshold is not None and (args.threshold <= 0.0 or args.threshold >= 1.0):
+        sys.exit('Error: --threshold must be greater than 0 and less than 1')
+    if args.count is not None and (args.count <= 0):
+        sys.exit('Error: --count must be greater than 0')
+
+
 def threshold_based_dereplication(all_assemblies, args):
-    print(f'Running dereplication on all {len(all_assemblies)} assemblies...')
-    assemblies = sorted(all_assemblies)
+    print(f'Running threshold-based dereplication on {len(all_assemblies)} assemblies...')
+    all_assemblies = sorted(all_assemblies)
     excluded_assemblies = set()
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -99,6 +122,10 @@ def threshold_based_dereplication(all_assemblies, args):
                 print(os.path.basename(assemblies[0]) + '*')
 
     return [x for x in all_assemblies if x not in excluded_assemblies]
+
+
+def count_based_dereplication(all_assemblies, args):
+    return all_assemblies  # TEMP
 
 
 def copy_to_output_dir(derep_assemblies, initial_count, args):

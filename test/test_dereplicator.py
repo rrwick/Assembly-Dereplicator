@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License along with thi
 see <https://www.gnu.org/licenses/>.
 """
 
+import collections
 import dereplicator
 import glob
 import gzip
@@ -191,3 +192,23 @@ def test_help_2():
     with pytest.raises(SystemExit) as sysexit:
         dereplicator.main([])
         assert sysexit.code == 1
+
+
+def test_check_args():
+    Args = collections.namedtuple('Args', ['in_dir', 'out_dir', 'threshold', 'count'])
+    with pytest.raises(SystemExit):
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=None))
+    with pytest.raises(SystemExit):
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=0.001, count=100))
+    with pytest.raises(SystemExit):
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=0.0, count=None))
+    with pytest.raises(SystemExit):
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=-0.1, count=None))
+    with pytest.raises(SystemExit):
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=2.0, count=None))
+    with pytest.raises(SystemExit):
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=0))
+    with pytest.raises(SystemExit):
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=-1))
+    dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=0.001, count=None))
+    dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=100))
