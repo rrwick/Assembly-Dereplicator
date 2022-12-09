@@ -45,9 +45,6 @@ def get_arguments(args):
                               help='Mash distance clustering threshold')
     setting_args.add_argument('--sketch_size', type=int, default=10000,
                               help='Mash assembly sketch size')
-    setting_args.add_argument('--batch_size', type=int, default=1000000,
-                              help='Dereplication iterations will occur on random batches of this '
-                                   'many assemblies - smaller numbers will reduce memory usage')
     setting_args.add_argument('--threads', type=int, default=get_default_thread_count(),
                               help='Number of CPU threads for Mash')
     setting_args.add_argument('--verbose', action='store_true',
@@ -70,57 +67,26 @@ def main(args=None):
     all_assemblies = find_all_assemblies(args.in_dir)
     initial_count = len(all_assemblies)
     os.makedirs(args.out_dir, exist_ok=True)
-
-    excluded_assemblies = set()
-    while True:
-        if len(all_assemblies) <= args.batch_size:
-            break
-
-        print(f'Running dereplication on a random batch of {args.batch_size} assemblies...')
-        random.shuffle(all_assemblies)
-        batch_assemblies = all_assemblies[:args.batch_size]
-        newly_excluded = dereplicate(batch_assemblies, args.threads, args.threshold,
-                                     args.sketch_size, args.verbose)
-
-        if len(newly_excluded) == 0:
-            print('  no clusters found\n')
-            break
-        else:
-            excluded_assemblies |= newly_excluded
-
-        all_assemblies = [x for x in all_assemblies if x not in excluded_assemblies]
-        print(f'{len(all_assemblies):,} assemblies remain\n')
-
-    if initial_count <= args.batch_size:
-        print(f'Running dereplication on all {len(all_assemblies)} assemblies...')
-    else:
-        print(f'Running a final dereplication on all {len(all_assemblies)} assemblies...')
-    excluded_assemblies |= dereplicate(all_assemblies, args.threads, args.threshold,
-                                       args.sketch_size, args.verbose)
-    all_assemblies = [x for x in all_assemblies if x not in excluded_assemblies]
-
-    print(f'\nFinal dereplication: {len(all_assemblies):,} / {initial_count:,} assemblies')
-    print(f'Copying dereplicated assemblies to {args.out_dir}')
-    for a in all_assemblies:
-        shutil.copy(a, args.out_dir)
-    print()
+    derep_assemblies = threshold_based_dereplication(all_assemblies, args)
+    copy_to_output_dir(derep_assemblies, initial_count, args)
 
 
-def dereplicate(all_assemblies, threads, threshold, sketch_size, verbose):
-    all_assemblies = sorted(all_assemblies)
+def threshold_based_dereplication(all_assemblies, args):
+    print(f'Running dereplication on all {len(all_assemblies)} assemblies...')
+    assemblies = sorted(all_assemblies)
     excluded_assemblies = set()
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        mash_sketch = build_mash_sketch(all_assemblies, threads, temp_dir, sketch_size)
-        pairwise_distances = pairwise_mash_distances(mash_sketch, threads)
-        assemblies, graph = create_graph_from_distances(pairwise_distances, threshold)
-        clusters = cluster_assemblies(assemblies, graph)
+        mash_sketch = build_mash_sketch(all_assemblies, args.threads, temp_dir, args.sketch_size)
+        pairwise_distances = pairwise_mash_distances(mash_sketch, args.threads)
+        all_assemblies, graph = create_graph_from_distances(pairwise_distances, args.threshold)
+        clusters = cluster_assemblies(all_assemblies, graph)
 
         for assemblies in clusters:
             if len(assemblies) > 1:
                 n50, representative = sorted([(get_assembly_n50(a), a) for a in assemblies])[-1]
                 rep_name = os.path.basename(representative)
-                if verbose:
+                if args.verbose:
                     print(os.path.basename(representative) + '*,', end='')
                     non_rep_assemblies = [os.path.basename(a) for a in assemblies
                                           if a != representative]
@@ -128,11 +94,19 @@ def dereplicate(all_assemblies, threads, threshold, sketch_size, verbose):
                 else:
                     print(f'  cluster of {len(assemblies)} assemblies: {rep_name} (N50 = {n50:,})')
                 excluded_assemblies |= set([x for x in assemblies if x != representative])
-            elif verbose:
+            elif args.verbose:
                 assert len(assemblies) == 1
                 print(os.path.basename(assemblies[0]) + '*')
 
-    return excluded_assemblies
+    return [x for x in all_assemblies if x not in excluded_assemblies]
+
+
+def copy_to_output_dir(derep_assemblies, initial_count, args):
+    print(f'\nFinal dereplication: {len(derep_assemblies):,} / {initial_count:,} assemblies')
+    print(f'Copying dereplicated assemblies to {args.out_dir}')
+    for a in derep_assemblies:
+        shutil.copy(a, args.out_dir)
+    print()
 
 
 def build_mash_sketch(assemblies, threads, temp_dir, sketch_size):
