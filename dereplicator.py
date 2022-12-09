@@ -47,8 +47,6 @@ def get_arguments(args):
     threshold_args = parser.add_argument_group('Count-based clustering')
     threshold_args.add_argument('--count', type=int,
                                 help='Target assembly count')
-    threshold_args.add_argument('--starting_assembly', type=str,
-                                help='Starting assembly (will be included in cluster)')
 
     setting_args = parser.add_argument_group('Settings')
     setting_args.add_argument('--sketch_size', type=int, default=10000,
@@ -96,7 +94,6 @@ def check_args(args):
 
 def threshold_based_dereplication(all_assemblies, args):
     print(f'Running threshold-based dereplication on {len(all_assemblies)} assemblies...')
-    all_assemblies = sorted(all_assemblies)
     excluded_assemblies = set()
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -125,7 +122,25 @@ def threshold_based_dereplication(all_assemblies, args):
 
 
 def count_based_dereplication(all_assemblies, args):
-    return all_assemblies  # TEMP
+    print(f'Running count-based dereplication on {len(all_assemblies)} assemblies...')
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        mash_sketch = build_mash_sketch(all_assemblies, args.threads, temp_dir, args.sketch_size)
+        pairwise_distances = pairwise_mash_distances(mash_sketch, args.threads)
+        starting_assembly = choose_starting_assembly(all_assemblies, pairwise_distances)
+        print(f'  {os.path.basename(starting_assembly)}')
+        remaining_assemblies = set(all_assemblies)
+        derep_assemblies = {starting_assembly}
+        remaining_assemblies.remove(starting_assembly)
+        while remaining_assemblies and len(derep_assemblies) < args.count:
+            total_distances = {a: sum(pairwise_distances[(a, b)] for b in derep_assemblies)
+                               for a in remaining_assemblies}
+            most_distant = max(total_distances, key=total_distances.get)
+            print(f'  {os.path.basename(most_distant)}')
+            derep_assemblies.add(most_distant)
+            remaining_assemblies.remove(most_distant)
+
+    return sorted(derep_assemblies)
 
 
 def copy_to_output_dir(derep_assemblies, initial_count, args):
@@ -134,6 +149,17 @@ def copy_to_output_dir(derep_assemblies, initial_count, args):
     for a in derep_assemblies:
         shutil.copy(a, args.out_dir)
     print()
+
+
+def choose_starting_assembly(all_assemblies, pairwise_distances):
+    """
+    Returns the assembly with the lowest total sum of distances to the other assemblies. I.e. it
+    chooses an assembly that is more central to the group, not a distant outlier.
+    """
+    total_distances = {a: sum(pairwise_distances[(a, b)] for b in all_assemblies)
+                       for a in all_assemblies}
+    starting_assembly = min(total_distances, key=total_distances.get)
+    return starting_assembly
 
 
 def build_mash_sketch(assemblies, threads, temp_dir, sketch_size):
@@ -146,7 +172,14 @@ def build_mash_sketch(assemblies, threads, temp_dir, sketch_size):
 def pairwise_mash_distances(mash_sketch, threads):
     mash_command = ['mash', 'dist', '-p', str(threads), mash_sketch, mash_sketch]
     mash_out = subprocess.run(mash_command, stdout=subprocess.PIPE).stdout.decode()
-    return mash_out.splitlines()
+    distances = {}
+    for line in mash_out.splitlines():
+        parts = line.split('\t')
+        assembly_1 = parts[0]
+        assembly_2 = parts[1]
+        distance = float(parts[2])
+        distances[(assembly_1, assembly_2)] = distance
+    return distances
 
 
 def find_all_assemblies(in_dir):
@@ -158,7 +191,7 @@ def find_all_assemblies(in_dir):
                       x.endswith('.fna') or x.endswith('.fna.gz') or
                       x.endswith('.fa') or x.endswith('.fa.gz')]
     print(f'found {len(all_assemblies):,} files\n')
-    return all_assemblies
+    return sorted(all_assemblies)
 
 
 def create_graph_from_distances(pairwise_distances, threshold):
@@ -169,11 +202,8 @@ def create_graph_from_distances(pairwise_distances, threshold):
     assemblies = set()
     graph = collections.defaultdict(set)
     all_connections = collections.defaultdict(set)
-    for line in pairwise_distances:
-        parts = line.split('\t')
-        assembly_1 = parts[0]
-        assembly_2 = parts[1]
-        distance = float(parts[2])
+    for pair, distance in pairwise_distances.items():
+        assembly_1, assembly_2 = pair
         assemblies.add(assembly_1)
         assemblies.add(assembly_2)
         if assembly_1 == assembly_2:
