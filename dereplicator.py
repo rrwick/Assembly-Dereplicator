@@ -54,7 +54,7 @@ def get_arguments(args):
     setting_args.add_argument('--threads', type=int, default=get_default_thread_count(),
                               help='Number of CPU threads for Mash')
     setting_args.add_argument('--verbose', action='store_true',
-                              help='Display more clustering information')
+                              help='Display more output information')
 
     other_args = parser.add_argument_group('Other')
     other_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
@@ -107,7 +107,7 @@ def threshold_based_dereplication(all_assemblies, args):
                 n50, representative = sorted([(get_assembly_n50(a), a) for a in assemblies])[-1]
                 rep_name = os.path.basename(representative)
                 if args.verbose:
-                    print(os.path.basename(representative) + '*,', end='')
+                    print(' ', os.path.basename(representative) + '*,', end='')
                     non_rep_assemblies = [os.path.basename(a) for a in assemblies
                                           if a != representative]
                     print(','.join(non_rep_assemblies))
@@ -116,7 +116,7 @@ def threshold_based_dereplication(all_assemblies, args):
                 excluded_assemblies |= set([x for x in assemblies if x != representative])
             elif args.verbose:
                 assert len(assemblies) == 1
-                print(os.path.basename(assemblies[0]) + '*')
+                print(' ', os.path.basename(assemblies[0]) + '*')
 
     return [x for x in all_assemblies if x not in excluded_assemblies]
 
@@ -128,7 +128,10 @@ def count_based_dereplication(all_assemblies, args):
         mash_sketch = build_mash_sketch(all_assemblies, args.threads, temp_dir, args.sketch_size)
         pairwise_distances = pairwise_mash_distances(mash_sketch, args.threads)
         starting_assembly = choose_starting_assembly(all_assemblies, pairwise_distances)
-        print(f'  {os.path.basename(starting_assembly)}')
+        if args.verbose:
+            print(f'  {os.path.basename(starting_assembly)} (starting assembly)')
+        else:
+            print(f'  {os.path.basename(starting_assembly)}')
         remaining_assemblies = set(all_assemblies)
         derep_assemblies = {starting_assembly}
         remaining_assemblies.remove(starting_assembly)
@@ -136,7 +139,11 @@ def count_based_dereplication(all_assemblies, args):
             total_distances = {a: sum(pairwise_distances[(a, b)] for b in derep_assemblies)
                                for a in remaining_assemblies}
             most_distant = max(total_distances, key=total_distances.get)
-            print(f'  {os.path.basename(most_distant)}')
+            if args.verbose:
+                mean_distance = total_distances[most_distant] / len(derep_assemblies)
+                print(f'  {os.path.basename(most_distant)} (mean distance = {mean_distance:.6f})')
+            else:
+                print(f'  {os.path.basename(most_distant)}')
             derep_assemblies.add(most_distant)
             remaining_assemblies.remove(most_distant)
 
@@ -190,7 +197,7 @@ def find_all_assemblies(in_dir):
                       x.endswith('.fasta') or x.endswith('.fasta.gz') or
                       x.endswith('.fna') or x.endswith('.fna.gz') or
                       x.endswith('.fa') or x.endswith('.fa.gz')]
-    print(f'found {len(all_assemblies):,} files\n')
+    print(f'  found {len(all_assemblies):,} files\n')
     return sorted(all_assemblies)
 
 
