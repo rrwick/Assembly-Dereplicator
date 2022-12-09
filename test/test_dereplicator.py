@@ -114,7 +114,7 @@ def test_find_all_assemblies_2():
                           'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
 
 
-def test_entire_script_1():
+def test_threshold_dereplication_1():
     """
     With a thresholds of 1%, only 2.fasta.gz should be excluded.
     """
@@ -126,7 +126,7 @@ def test_entire_script_1():
         assert derep_assembles == ['1.fasta', '3.fna', '4.fna.gz', '5.fa', '6.fa.gz']
 
 
-def test_entire_script_2():
+def test_threshold_dereplication_2():
     """
     With a thresholds of 3.5%, 2.fasta.gz and 4.fna.gz should be excluded.
     """
@@ -138,7 +138,7 @@ def test_entire_script_2():
         assert derep_assembles == ['1.fasta', '3.fna', '5.fa', '6.fa.gz']
 
 
-def test_entire_script_3():
+def test_threshold_dereplication_3():
     """
     With a thresholds of 10%, 2.fasta.gz, 4.fna.gz and 5.fa should be excluded.
     """
@@ -148,6 +148,37 @@ def test_entire_script_3():
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['1.fasta', '3.fna', '6.fa.gz']
+
+
+def test_threshold_dereplication_4():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.008', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
+
+
+def test_threshold_dereplication_5():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.004', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz']
+
+
+def test_threshold_dereplication_6():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.0001', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003214135.1.fna.gz', 'GCF_003214255.1.fna.gz',
+                                   'GCF_003214655.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
 
 
 def test_help_1():
