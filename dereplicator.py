@@ -176,19 +176,6 @@ def build_mash_sketch(assemblies, threads, temp_dir, sketch_size):
     return temp_dir + '/mash.msh'
 
 
-def pairwise_mash_distances(mash_sketch, threads):
-    mash_command = ['mash', 'dist', '-p', str(threads), mash_sketch, mash_sketch]
-    mash_out = subprocess.run(mash_command, stdout=subprocess.PIPE).stdout.decode()
-    distances = {}
-    for line in mash_out.splitlines():
-        parts = line.split('\t')
-        assembly_1 = parts[0]
-        assembly_2 = parts[1]
-        distance = float(parts[2])
-        distances[(assembly_1, assembly_2)] = distance
-    return distances
-
-
 def find_all_assemblies(in_dir):
     print(f'\nLooking for assembly files in {in_dir}:')
     all_assemblies = [str(x) for x in sorted(pathlib.Path(in_dir).glob('**/*'))
@@ -199,6 +186,22 @@ def find_all_assemblies(in_dir):
                       x.endswith('.fa') or x.endswith('.fa.gz')]
     print(f'  found {len(all_assemblies):,} files\n')
     return sorted(all_assemblies)
+
+
+def pairwise_mash_distances(mash_sketch, threads):
+    mash_command = ['mash', 'dist', '-p', str(threads), mash_sketch, mash_sketch]
+    distances = {}
+    p = subprocess.Popen(mash_command, stdout=subprocess.PIPE, universal_newlines=True)
+    for line in p.stdout:
+        parts = line.split('\t')
+        assembly_1 = parts[0]
+        assembly_2 = parts[1]
+        distance = float(parts[2])
+        distances[(assembly_1, assembly_2)] = distance
+    p.wait()
+    if p.returncode != 0:
+        sys.exit('Error: mash dist did not complete successfully')
+    return distances
 
 
 def create_graph_from_distances(pairwise_distances, threshold):
