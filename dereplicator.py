@@ -76,7 +76,7 @@ def main(args=None):
     initial_count = len(all_assemblies)
     os.makedirs(args.out_dir, exist_ok=True)
     derep_assemblies = dereplication(all_assemblies, args)
-    copy_to_output_dir(derep_assemblies, initial_count, args)
+    copy_to_output_dir(derep_assemblies, args)
 
 
 def check_args(args):
@@ -111,9 +111,16 @@ def dereplication(all_assemblies, args):
         assemblies.remove(discard)
         discarded.add(discard)
         if args.verbose:
+            print()
             a_name, b_name = os.path.basename(a), os.path.basename(b)
-            print(f'{a_name} (N50={n50_a}) vs {b_name} (N50={n50_b}), distance={distance}')
-        print(f'  discarding {os.path.basename(discard)}')
+            print(f'closest pair: {a_name} and {b_name}')
+            print(f'  distance = {distance}')
+            print(f'  {a_name} N50 = {n50_a} bp')
+            print(f'  {b_name} N50 = {n50_b} bp')
+            print(f'  discarding {os.path.basename(discard)}')
+            print(f'  remaining assemblies: {len(assemblies)}')
+        else:
+            print(f'  discarding {os.path.basename(discard)}')
     return assemblies
 
 
@@ -132,9 +139,9 @@ def stop(count, distance, assemblies, pairwise_distances):
     return count_condition and distance_condition
 
 
-def copy_to_output_dir(derep_assemblies, initial_count, args):
-    print(f'\nDereplication: {len(derep_assemblies):,} / {initial_count:,} assemblies')
-    print(f'Copying dereplicated assemblies to {args.out_dir}')
+def copy_to_output_dir(derep_assemblies, args):
+    plural = 'assembly' if len(derep_assemblies) == 1 else 'assemblies'
+    print(f'\nCopying {len(derep_assemblies)} dereplicated {plural} to {args.out_dir}')
     for a in derep_assemblies:
         shutil.copy(a, args.out_dir)
     print()
