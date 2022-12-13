@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Copyright 2019 Ryan Wick (rrwick@gmail.com)
+Copyright 2022 Ryan Wick (rrwick@gmail.com)
 https://github.com/rrwick/Assembly-dereplicator
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU
@@ -73,7 +73,6 @@ def main(args=None):
     check_args(args)
     random.seed(0)
     all_assemblies = find_all_assemblies(args.in_dir)
-    initial_count = len(all_assemblies)
     os.makedirs(args.out_dir, exist_ok=True)
     derep_assemblies = dereplication(all_assemblies, args)
     copy_to_output_dir(derep_assemblies, args)
@@ -98,9 +97,9 @@ def dereplication(all_assemblies, args):
       * the assembly count has reached the user-supplied --count
       * the closest pair's distance has reached the user-supplied --distance
     """
-    print(f'Running dereplication on {len(all_assemblies)} assemblies:')
     assemblies, discarded = set(all_assemblies), set()
     pairwise_distances = pairwise_mash_distances(all_assemblies, args.threads, args.sketch_size)
+    print(f'\nRunning dereplication on {len(all_assemblies)} assemblies:')
     while not stop(args.count, args.distance, assemblies, pairwise_distances):
         distance, a, b = pairwise_distances[-1]
         pairwise_distances.pop()
@@ -133,10 +132,21 @@ def stop(count, distance, assemblies, pairwise_distances):
     * the user supplied both --count and --distance and both values have been reached
     """
     if len(assemblies) == 1:
+        print('\nStop condition reached: 1 assembly remains')
         return True
-    count_condition = (count is None or len(assemblies) <= count)
-    distance_condition = (distance is None or pairwise_distances[-1][0] >= distance)
-    return count_condition and distance_condition
+    if distance is None and len(assemblies) <= count:
+        plural = 'assembly remains' if len(assemblies) == 1 else 'assemblies remain'
+        print(f'\nStop condition reached: {len(assemblies)} {plural}')
+        return True
+    if count is None and pairwise_distances[-1][0] >= distance:
+        print(f'\nStop condition reached: closest pair distance ≥{distance}')
+        return True
+    if (distance is not None and count is not None
+            and len(assemblies) <= count and pairwise_distances[-1][0] >= distance):
+        plural = 'assembly remains' if count == 1 else 'assemblies remain'
+        print(f'\nStop condition reached: closest pair distance ≥{distance} and ≤{count} {plural}')
+        return True
+    return False
 
 
 def copy_to_output_dir(derep_assemblies, args):
@@ -155,7 +165,7 @@ def find_all_assemblies(in_dir):
                       x.endswith('.fasta') or x.endswith('.fasta.gz') or
                       x.endswith('.fna') or x.endswith('.fna.gz') or
                       x.endswith('.fa') or x.endswith('.fa.gz')]
-    print(f'  found {len(all_assemblies):,} files\n')
+    print(f'  found {len(all_assemblies):,} files')
     return sorted(all_assemblies)
 
 
@@ -164,6 +174,7 @@ def pairwise_mash_distances(assemblies, threads, sketch_size):
     Returns a list of tuples (distance, assembly_1, assembly_2), sorted so the largest distances
     are the front of the list and the smallest distances are at the end.
     """
+    print('\nRunning Mash to get all pairwise distances...', flush=True, end='')
     with tempfile.TemporaryDirectory() as temp_dir:
         mash_sketch = build_mash_sketch(assemblies, threads, temp_dir, sketch_size)
         mash_command = ['mash', 'dist', '-p', str(threads), mash_sketch, mash_sketch]
@@ -179,6 +190,7 @@ def pairwise_mash_distances(assemblies, threads, sketch_size):
         p.wait()
         if p.returncode != 0:
             sys.exit('Error: mash dist did not complete successfully')
+    print(' done', flush=True)
     return sorted(distances, reverse=True)
 
 
