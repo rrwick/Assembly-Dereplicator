@@ -17,6 +17,7 @@ see <https://www.gnu.org/licenses/>.
 
 import argparse
 import collections
+import functools
 import gzip
 import multiprocessing
 import os
@@ -74,10 +75,7 @@ def main(args=None):
     all_assemblies = find_all_assemblies(args.in_dir)
     initial_count = len(all_assemblies)
     os.makedirs(args.out_dir, exist_ok=True)
-    if args.threshold is not None:
-        derep_assemblies = threshold_based_dereplication(all_assemblies, args)
-    else:  # args.count is not None
-        derep_assemblies = count_based_dereplication(all_assemblies, args)
+    derep_assemblies = dereplication(all_assemblies, args)
     copy_to_output_dir(derep_assemblies, initial_count, args)
 
 
@@ -92,75 +90,39 @@ def check_args(args):
         sys.exit('Error: --count must be greater than 0')
 
 
-def threshold_based_dereplication(all_assemblies, args):
-    print(f'Running threshold-based dereplication on {len(all_assemblies)} assemblies:')
-    excluded_assemblies = set()
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        mash_sketch = build_mash_sketch(all_assemblies, args.threads, temp_dir, args.sketch_size)
-        pairwise_distances = pairwise_mash_distances(mash_sketch, args.threads)
-        all_assemblies, graph = create_graph_from_distances(pairwise_distances, args.threshold)
-        clusters = cluster_assemblies(all_assemblies, graph)
-
-        for assemblies in clusters:
-            if len(assemblies) > 1:
-                n50, representative = sorted([(get_assembly_n50(a), a) for a in assemblies])[-1]
-                rep_name = os.path.basename(representative)
-                if args.verbose:
-                    print(' ', os.path.basename(representative) + '*,', end='')
-                    non_rep_assemblies = [os.path.basename(a) for a in assemblies
-                                          if a != representative]
-                    print(','.join(non_rep_assemblies))
-                else:
-                    print(f'  cluster of {len(assemblies)} assemblies: {rep_name} (N50 = {n50:,})')
-                excluded_assemblies |= set([x for x in assemblies if x != representative])
-            elif args.verbose:
-                assert len(assemblies) == 1
-                print(' ', os.path.basename(assemblies[0]) + '*')
-
-    return [x for x in all_assemblies if x not in excluded_assemblies]
-
-
-def count_based_dereplication(all_assemblies, args):
-    print(f'Running count-based dereplication on {len(all_assemblies)} assemblies:')
-    assemblies = set(all_assemblies)
-    with tempfile.TemporaryDirectory() as temp_dir:
-        mash_sketch = build_mash_sketch(all_assemblies, args.threads, temp_dir, args.sketch_size)
-        pairwise_distances = pairwise_mash_distances(mash_sketch, args.threads)
-        while len(assemblies) > args.count:
-            a, b = find_minimum_distance_pair(assemblies, pairwise_distances)
-            n50_a, n50_b = get_assembly_n50(a), get_assembly_n50(b)
-            if n50_a >= n50_b:
-                keep, discard = a, b
-            else:
-                keep, discard = b, a
-            assemblies.remove(discard)
-            if args.verbose:
-                a_name, b_name = os.path.basename(a), os.path.basename(b)
-                distance = pairwise_distances[(a, b)]
-                print(f'{a_name} (N50={n50_a}) vs {b_name} (N50={n50_b}), distance={distance}')
-            print(f'  discarding {os.path.basename(discard)}')
+def dereplication(all_assemblies, args):
+    """
+    Runs dereplication by:
+    * finding the closest pair of assemblies
+    * discarding the assembly in the pair with the lower N50
+    * repeating until one of the following conditions is met:
+      * there is only one assembly left
+      * the assembly count has reached the user-supplied --count
+      * the closest pair's distance has reached the user-supplied --threshold
+    """
+    print(f'Running dereplication on {len(all_assemblies)} assemblies:')
+    assemblies, discarded = set(all_assemblies), set()
+    pairwise_distances = pairwise_mash_distances(all_assemblies, args.threads, args.sketch_size)
+    while True:
+        if len(assemblies) == 1:
+            break
+        if args.count is not None and len(assemblies) <= args.count:
+            break
+        distance, a, b = pairwise_distances[-1]
+        if args.threshold is not None and distance >= args.threshold:
+            break
+        pairwise_distances.pop()
+        if a in discarded or b in discarded:
+            continue
+        n50_a, n50_b = get_assembly_n50(a), get_assembly_n50(b)
+        discard = b if n50_a >= n50_b else a
+        assemblies.remove(discard)
+        discarded.add(discard)
+        if args.verbose:
+            a_name, b_name = os.path.basename(a), os.path.basename(b)
+            print(f'{a_name} (N50={n50_a}) vs {b_name} (N50={n50_b}), distance={distance}')
+        print(f'  discarding {os.path.basename(discard)}')
     return assemblies
-
-
-def find_minimum_distance_pair(assemblies, pairwise_distances):
-    """
-    Given a set of assemblies and a dictionary of their pairwise distances, this function returns
-    the pair with the lowest pairwise distance. In the case of a tie, the lexicographically first
-    pair is returned.
-    """
-    min_distance = float('inf')
-    min_distance_pairs = []
-    for a in assemblies:
-        for b in assemblies:
-            if a < b:
-                distance = pairwise_distances[(a, b)]
-                if distance == min_distance:
-                    min_distance_pairs.append((a, b))
-                if distance < min_distance:
-                    min_distance = distance
-                    min_distance_pairs = [(a, b)]
-    return sorted(min_distance_pairs)[0]
 
 
 def copy_to_output_dir(derep_assemblies, initial_count, args):
@@ -169,13 +131,6 @@ def copy_to_output_dir(derep_assemblies, initial_count, args):
     for a in derep_assemblies:
         shutil.copy(a, args.out_dir)
     print()
-
-
-def build_mash_sketch(assemblies, threads, temp_dir, sketch_size):
-    mash_command = ['mash', 'sketch', '-p', str(threads), '-o', temp_dir + '/mash',
-                    '-s', str(sketch_size)] + assemblies
-    subprocess.run(mash_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    return temp_dir + '/mash.msh'
 
 
 def find_all_assemblies(in_dir):
@@ -190,71 +145,37 @@ def find_all_assemblies(in_dir):
     return sorted(all_assemblies)
 
 
-def pairwise_mash_distances(mash_sketch, threads):
-    mash_command = ['mash', 'dist', '-p', str(threads), mash_sketch, mash_sketch]
-    distances = {}
-    p = subprocess.Popen(mash_command, stdout=subprocess.PIPE, universal_newlines=True)
-    for line in p.stdout:
-        parts = line.split('\t')
-        assembly_1 = parts[0]
-        assembly_2 = parts[1]
-        distance = float(parts[2])
-        if assembly_1 != assembly_2:
-            distances[(assembly_1, assembly_2)] = distance
-    p.wait()
-    if p.returncode != 0:
-        sys.exit('Error: mash dist did not complete successfully')
-    return distances
-
-
-def create_graph_from_distances(pairwise_distances, threshold):
+def pairwise_mash_distances(assemblies, threads, sketch_size):
     """
-    Builds an undirected graph where nodes are assemblies and edges connect assemblies which have
-    a pairwise Mash distance below the threshold.
+    Returns a list of tuples (distance, assembly_1, assembly_2), sorted so the largest distances
+    are the front of the list and the smallest distances are at the end.
     """
-    assemblies = set()
-    graph = collections.defaultdict(set)
-    all_connections = collections.defaultdict(set)
-    for pair, distance in pairwise_distances.items():
-        assembly_1, assembly_2 = pair
-        assemblies.add(assembly_1)
-        assemblies.add(assembly_2)
-        if assembly_1 == assembly_2:
-            continue
-        all_connections[assembly_1].add(assembly_2)
-        all_connections[assembly_2].add(assembly_1)
-        if distance < threshold:
-            graph[assembly_1].add(assembly_2)
-            graph[assembly_2].add(assembly_1)
-    assemblies = sorted(assemblies)
-    assembly_count = len(assemblies)
-    for assembly in assemblies:  # sanity check: make sure we have all the connections
-        assert len(all_connections[assembly]) == assembly_count - 1
-    return assemblies, graph
+    with tempfile.TemporaryDirectory() as temp_dir:
+        mash_sketch = build_mash_sketch(assemblies, threads, temp_dir, sketch_size)
+        mash_command = ['mash', 'dist', '-p', str(threads), mash_sketch, mash_sketch]
+        distances = []
+        p = subprocess.Popen(mash_command, stdout=subprocess.PIPE, universal_newlines=True)
+        for line in p.stdout:
+            parts = line.split('\t')
+            assembly_1 = parts[0]
+            assembly_2 = parts[1]
+            distance = float(parts[2])
+            if assembly_1 < assembly_2:
+                distances.append((distance, assembly_1, assembly_2))
+        p.wait()
+        if p.returncode != 0:
+            sys.exit('Error: mash dist did not complete successfully')
+    return sorted(distances, reverse=True)
 
 
-def cluster_assemblies(assemblies, graph):
-    visited = set()
-    clusters = []
-    for assembly in assemblies:
-        if assembly in visited:
-            continue
-        connected = dfs(graph, assembly)
-        clusters.append(sorted(connected))
-        visited |= connected
-    return clusters
+def build_mash_sketch(assemblies, threads, temp_dir, sketch_size):
+    mash_command = ['mash', 'sketch', '-p', str(threads), '-o', temp_dir + '/mash',
+                    '-s', str(sketch_size)] + assemblies
+    subprocess.run(mash_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return temp_dir + '/mash.msh'
 
 
-def dfs(graph, start):
-    visited, stack = set(), [start]
-    while stack:
-        vertex = stack.pop()
-        if vertex not in visited:
-            visited.add(vertex)
-            stack.extend(graph[vertex] - visited)
-    return visited
-
-
+@functools.lru_cache(maxsize=None)
 def get_assembly_n50(filename):
     contig_lengths = sorted(get_contig_lengths(filename), reverse=True)
     total_length = sum(contig_lengths)

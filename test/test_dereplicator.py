@@ -152,25 +152,9 @@ def test_threshold_dereplication_3():
 
 
 def test_threshold_dereplication_4():
-    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
-    with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.008', in_dir, out_dir])
-        derep_assembles = sorted(glob.glob(out_dir + '/*'))
-        derep_assembles = [os.path.basename(a) for a in derep_assembles]
-        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
-
-
-def test_threshold_dereplication_5():
-    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
-    with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.004', '--verbose', in_dir, out_dir])
-        derep_assembles = sorted(glob.glob(out_dir + '/*'))
-        derep_assembles = [os.path.basename(a) for a in derep_assembles]
-        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz',
-                                   'GCF_003215395.1.fna.gz']
-
-
-def test_threshold_dereplication_6():
+    """
+    When given a very low threshold, all assemblies will be returned.
+    """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
         dereplicator.main(['--threshold', '0.0001', in_dir, out_dir])
@@ -180,6 +164,62 @@ def test_threshold_dereplication_6():
                                    'GCF_003214135.1.fna.gz', 'GCF_003214255.1.fna.gz',
                                    'GCF_003214655.1.fna.gz', 'GCF_003215265.1.fna.gz',
                                    'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
+
+
+def test_threshold_dereplication_5():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.001', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003214135.1.fna.gz', 'GCF_003214655.1.fna.gz',
+                                   'GCF_003215265.1.fna.gz', 'GCF_003215395.1.fna.gz',
+                                   'GCF_003215515.1.fna.gz']
+
+
+def test_threshold_dereplication_6():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.002', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003214655.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
+
+
+def test_threshold_dereplication_7():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.003', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003214655.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
+
+
+def test_threshold_dereplication_8():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.004', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz']
+
+
+def test_threshold_dereplication_9():
+    """
+    When given a very high threshold, the highest N50 assembly will be returned.
+    """
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.1', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003215265.1.fna.gz']
 
 
 def test_count_dereplication_1():
@@ -317,23 +357,3 @@ def test_check_args():
         dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=-1))
     dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=0.001, count=None))
     dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=100))
-
-
-def test_find_minimum_distance_pair_1():
-    distances = {('a', 'a'): 0.0, ('a', 'b'): 0.1, ('a', 'c'): 0.3,
-                 ('b', 'a'): 0.1, ('b', 'b'): 0.0, ('b', 'c'): 0.2,
-                 ('c', 'a'): 0.3, ('c', 'b'): 0.2, ('c', 'c'): 0.0}
-    assert dereplicator.find_minimum_distance_pair({'a', 'b', 'c'}, distances) == ('a', 'b')
-    assert dereplicator.find_minimum_distance_pair({'a', 'b'}, distances) == ('a', 'b')
-    assert dereplicator.find_minimum_distance_pair({'a', 'c'}, distances) == ('a', 'c')
-    assert dereplicator.find_minimum_distance_pair({'b', 'c'}, distances) == ('b', 'c')
-
-
-def test_find_minimum_distance_pair_2():
-    """
-    When there's a tie, return the alphabetically first pair
-    """
-    distances = {('a', 'a'): 0.0, ('a', 'b'): 0.1, ('a', 'c'): 0.1,
-                 ('b', 'a'): 0.1, ('b', 'b'): 0.0, ('b', 'c'): 0.1,
-                 ('c', 'a'): 0.1, ('c', 'b'): 0.1, ('c', 'c'): 0.0}
-    assert dereplicator.find_minimum_distance_pair({'a', 'b', 'c'}, distances) == ('a', 'b')
