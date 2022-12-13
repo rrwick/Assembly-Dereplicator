@@ -93,7 +93,7 @@ def check_args(args):
 
 
 def threshold_based_dereplication(all_assemblies, args):
-    print(f'Running threshold-based dereplication on {len(all_assemblies)} assemblies...')
+    print(f'Running threshold-based dereplication on {len(all_assemblies)} assemblies:')
     excluded_assemblies = set()
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -122,7 +122,7 @@ def threshold_based_dereplication(all_assemblies, args):
 
 
 def count_based_dereplication(all_assemblies, args):
-    print(f'Running count-based dereplication on {len(all_assemblies)} assemblies')
+    print(f'Running count-based dereplication on {len(all_assemblies)} assemblies:')
     assemblies = set(all_assemblies)
     with tempfile.TemporaryDirectory() as temp_dir:
         mash_sketch = build_mash_sketch(all_assemblies, args.threads, temp_dir, args.sketch_size)
@@ -135,7 +135,6 @@ def count_based_dereplication(all_assemblies, args):
             else:
                 keep, discard = b, a
             assemblies.remove(discard)
-
             if args.verbose:
                 a_name, b_name = os.path.basename(a), os.path.basename(b)
                 distance = pairwise_distances[(a, b)]
@@ -151,19 +150,16 @@ def find_minimum_distance_pair(assemblies, pairwise_distances):
     pair is returned.
     """
     min_distance = float('inf')
-    for a in assemblies:
-        for b in assemblies:
-            if a != b:
-                distance = pairwise_distances[(a, b)]
-                if distance < min_distance:
-                    min_distance = distance
     min_distance_pairs = []
     for a in assemblies:
         for b in assemblies:
-            if a != b:
+            if a < b:
                 distance = pairwise_distances[(a, b)]
                 if distance == min_distance:
                     min_distance_pairs.append((a, b))
+                if distance < min_distance:
+                    min_distance = distance
+                    min_distance_pairs = [(a, b)]
     return sorted(min_distance_pairs)[0]
 
 
