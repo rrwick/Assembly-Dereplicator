@@ -199,7 +199,8 @@ def pairwise_mash_distances(mash_sketch, threads):
         assembly_1 = parts[0]
         assembly_2 = parts[1]
         distance = float(parts[2])
-        distances[(assembly_1, assembly_2)] = distance
+        if assembly_1 != assembly_2:
+            distances[(assembly_1, assembly_2)] = distance
     p.wait()
     if p.returncode != 0:
         sys.exit('Error: mash dist did not complete successfully')
