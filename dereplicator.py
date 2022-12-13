@@ -32,7 +32,7 @@ __version__ = '0.3.0'
 
 
 def get_arguments(args):
-    parser = MyParser(description='Assembly dereplicator', add_help=False,
+    parser = MyParser(description='Assembly Dereplicator', add_help=False,
                       formatter_class=MyHelpFormatter)
 
     required_args = parser.add_argument_group('Positional arguments')
@@ -41,13 +41,13 @@ def get_arguments(args):
     required_args.add_argument('out_dir', type=str,
                                help='Directory where dereplicated assemblies will be copied')
 
-    threshold_args = parser.add_argument_group('Threshold-based clustering')
-    threshold_args.add_argument('--threshold', type=float,
-                                help='Mash distance clustering threshold')
-
-    threshold_args = parser.add_argument_group('Count-based clustering')
-    threshold_args.add_argument('--count', type=int,
-                                help='Target assembly count')
+    clustering_args = parser.add_argument_group('Dereplication target')
+    clustering_args.add_argument('--threshold', type=float,
+                                 help='Dereplicate until the closest pair has a Mash distance of '
+                                      'this value or greater')
+    clustering_args.add_argument('--count', type=int,
+                                 help='Dereplicate until there are no more than this many '
+                                      'assemblies')
 
     setting_args = parser.add_argument_group('Settings')
     setting_args.add_argument('--sketch_size', type=int, default=10000,
