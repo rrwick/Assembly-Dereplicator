@@ -115,49 +115,49 @@ def test_find_all_assemblies_2():
                           'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
 
 
-def test_threshold_dereplication_1():
+def test_distance_dereplication_1():
     """
-    With a thresholds of 1%, only 2.fasta.gz should be excluded.
+    With a distance of 1%, only 2.fasta.gz should be excluded.
     """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'assemblies')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.01', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.01', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['1.fasta', '3.fna', '4.fna.gz', '5.fa', '6.fa.gz']
 
 
-def test_threshold_dereplication_2():
+def test_distance_dereplication_2():
     """
-    With a thresholds of 3.5%, 2.fasta.gz and 4.fna.gz should be excluded.
+    With a distance of 3.5%, 2.fasta.gz and 4.fna.gz should be excluded.
     """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'assemblies')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.035', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.035', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['1.fasta', '3.fna', '5.fa', '6.fa.gz']
 
 
-def test_threshold_dereplication_3():
+def test_distance_dereplication_3():
     """
-    With a thresholds of 10%, 2.fasta.gz, 4.fna.gz and 5.fa should be excluded.
+    With a distance of 10%, 2.fasta.gz, 4.fna.gz and 5.fa should be excluded.
     """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'assemblies')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.1', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.1', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['1.fasta', '3.fna', '6.fa.gz']
 
 
-def test_threshold_dereplication_4():
+def test_distance_dereplication_4():
     """
-    When given a very low threshold, all assemblies will be returned.
+    When given a very low distance, all assemblies will be returned.
     """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.0001', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.0001', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
@@ -166,10 +166,10 @@ def test_threshold_dereplication_4():
                                    'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
 
 
-def test_threshold_dereplication_5():
+def test_distance_dereplication_5():
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.001', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.001', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
@@ -178,10 +178,10 @@ def test_threshold_dereplication_5():
                                    'GCF_003215515.1.fna.gz']
 
 
-def test_threshold_dereplication_6():
+def test_distance_dereplication_6():
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.002', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.002', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
@@ -189,10 +189,10 @@ def test_threshold_dereplication_6():
                                    'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
 
 
-def test_threshold_dereplication_7():
+def test_distance_dereplication_7():
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.003', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.003', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
@@ -200,23 +200,23 @@ def test_threshold_dereplication_7():
                                    'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
 
 
-def test_threshold_dereplication_8():
+def test_distance_dereplication_8():
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.004', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.004', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz',
                                    'GCF_003215395.1.fna.gz']
 
 
-def test_threshold_dereplication_9():
+def test_distance_dereplication_9():
     """
-    When given a very high threshold, the highest N50 assembly will be returned.
+    When given a very high distance, the highest N50 assembly will be returned.
     """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.1', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.1', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['GCF_003215265.1.fna.gz']
@@ -327,25 +327,25 @@ def test_count_dereplication_9():
         assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
 
 
-def test_threshold_and_count_dereplication_1():
+def test_distance_and_count_dereplication_1():
     """
-    When both --threshold and --count are used both conditions must be satisfied.
+    When both --distance and --count are used both conditions must be satisfied.
     """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.0001', '--count', '2', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.0001', '--count', '2', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
 
 
-def test_threshold_and_count_dereplication_2():
+def test_distance_and_count_dereplication_2():
     """
-    When both --threshold and --count are used both conditions must be satisfied.
+    When both --distance and --count are used both conditions must be satisfied.
     """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--threshold', '0.004', '--count', '6', in_dir, out_dir])
+        dereplicator.main(['--distance', '0.004', '--count', '6', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
         assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz',
@@ -365,18 +365,18 @@ def test_help_2():
 
 
 def test_check_args():
-    Args = collections.namedtuple('Args', ['in_dir', 'out_dir', 'threshold', 'count'])
+    Args = collections.namedtuple('Args', ['in_dir', 'out_dir', 'distance', 'count'])
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=None))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=None))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=0.0, count=None))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=0.0, count=None))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=-0.1, count=None))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=-0.1, count=None))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=2.0, count=None))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=2.0, count=None))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=0))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=0))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=-1))
-    dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=0.001, count=None))
-    dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=100))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=-1))
+    dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=0.001, count=None))
+    dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=100))
