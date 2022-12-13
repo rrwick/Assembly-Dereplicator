@@ -183,34 +183,21 @@ def test_threshold_dereplication_6():
 
 
 def test_count_dereplication_1():
+    """
+    When given a count of one, the highest N50 assembly will be returned.
+    """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
         dereplicator.main(['--count', '1', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
-        assert derep_assembles == ['GCF_003214255.1.fna.gz']
+        assert derep_assembles == ['GCF_003215265.1.fna.gz']
 
 
 def test_count_dereplication_2():
-    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
-    with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--count', '2', in_dir, out_dir])
-        derep_assembles = sorted(glob.glob(out_dir + '/*'))
-        derep_assembles = [os.path.basename(a) for a in derep_assembles]
-        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003214255.1.fna.gz']
-
-
-def test_count_dereplication_3():
-    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
-    with tempfile.TemporaryDirectory() as out_dir:
-        dereplicator.main(['--count', '3', '--verbose', in_dir, out_dir])
-        derep_assembles = sorted(glob.glob(out_dir + '/*'))
-        derep_assembles = [os.path.basename(a) for a in derep_assembles]
-        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003214135.1.fna.gz',
-                                   'GCF_003214255.1.fna.gz']
-
-
-def test_count_dereplication_4():
+    """
+    When given a count equal to the size of the input set, all assemblies will be returned.
+    """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
         dereplicator.main(['--count', '8', in_dir, out_dir])
@@ -222,7 +209,10 @@ def test_count_dereplication_4():
                                    'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
 
 
-def test_count_dereplication_5():
+def test_count_dereplication_3():
+    """
+    When given a count greater than the size of the input set, all assemblies will be returned.
+    """
     in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
     with tempfile.TemporaryDirectory() as out_dir:
         dereplicator.main(['--count', '100', in_dir, out_dir])
@@ -232,6 +222,69 @@ def test_count_dereplication_5():
                                    'GCF_003214135.1.fna.gz', 'GCF_003214255.1.fna.gz',
                                    'GCF_003214655.1.fna.gz', 'GCF_003215265.1.fna.gz',
                                    'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
+
+
+def test_count_dereplication_4():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--count', '7', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003214135.1.fna.gz', 'GCF_003214655.1.fna.gz',
+                                   'GCF_003215265.1.fna.gz', 'GCF_003215395.1.fna.gz',
+                                   'GCF_003215515.1.fna.gz']
+
+
+def test_count_dereplication_5():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--count', '6', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003214655.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
+
+
+def test_count_dereplication_6():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--count', '5', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003215265.1.fna.gz', 'GCF_003215395.1.fna.gz',
+                                   'GCF_003215515.1.fna.gz']
+
+
+def test_count_dereplication_7():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--count', '4', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003215265.1.fna.gz', 'GCF_003215395.1.fna.gz']
+
+
+def test_count_dereplication_8():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--count', '3', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz']
+
+
+def test_count_dereplication_9():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--count', '2', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
 
 
 def test_help_1():
@@ -264,3 +317,23 @@ def test_check_args():
         dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=-1))
     dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=0.001, count=None))
     dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=100))
+
+
+def test_find_minimum_distance_pair_1():
+    distances = {('a', 'a'): 0.0, ('a', 'b'): 0.1, ('a', 'c'): 0.3,
+                 ('b', 'a'): 0.1, ('b', 'b'): 0.0, ('b', 'c'): 0.2,
+                 ('c', 'a'): 0.3, ('c', 'b'): 0.2, ('c', 'c'): 0.0}
+    assert dereplicator.find_minimum_distance_pair({'a', 'b', 'c'}, distances) == ('a', 'b')
+    assert dereplicator.find_minimum_distance_pair({'a', 'b'}, distances) == ('a', 'b')
+    assert dereplicator.find_minimum_distance_pair({'a', 'c'}, distances) == ('a', 'c')
+    assert dereplicator.find_minimum_distance_pair({'b', 'c'}, distances) == ('b', 'c')
+
+
+def test_find_minimum_distance_pair_2():
+    """
+    When there's a tie, return the alphabetically first pair
+    """
+    distances = {('a', 'a'): 0.0, ('a', 'b'): 0.1, ('a', 'c'): 0.1,
+                 ('b', 'a'): 0.1, ('b', 'b'): 0.0, ('b', 'c'): 0.1,
+                 ('c', 'a'): 0.1, ('c', 'b'): 0.1, ('c', 'c'): 0.0}
+    assert dereplicator.find_minimum_distance_pair({'a', 'b', 'c'}, distances) == ('a', 'b')

@@ -122,51 +122,57 @@ def threshold_based_dereplication(all_assemblies, args):
 
 
 def count_based_dereplication(all_assemblies, args):
-    print(f'Running count-based dereplication on {len(all_assemblies)} assemblies...')
-
+    print(f'Running count-based dereplication on {len(all_assemblies)} assemblies')
+    assemblies = set(all_assemblies)
     with tempfile.TemporaryDirectory() as temp_dir:
         mash_sketch = build_mash_sketch(all_assemblies, args.threads, temp_dir, args.sketch_size)
         pairwise_distances = pairwise_mash_distances(mash_sketch, args.threads)
-        starting_assembly = choose_starting_assembly(all_assemblies, pairwise_distances)
-        if args.verbose:
-            print(f'  {os.path.basename(starting_assembly)} (starting assembly)')
-        else:
-            print(f'  {os.path.basename(starting_assembly)}')
-        remaining_assemblies = set(all_assemblies)
-        derep_assemblies = {starting_assembly}
-        remaining_assemblies.remove(starting_assembly)
-        while remaining_assemblies and len(derep_assemblies) < args.count:
-            min_distances = {a: min(pairwise_distances[(a, b)] for b in derep_assemblies)
-                             for a in remaining_assemblies}
-            most_distant = max(min_distances, key=min_distances.get)
-            if args.verbose:
-                print(f'  {os.path.basename(most_distant)}'
-                      f' (distance = {min_distances[most_distant]:.6f})')
+        while len(assemblies) > args.count:
+            a, b = find_minimum_distance_pair(assemblies, pairwise_distances)
+            n50_a, n50_b = get_assembly_n50(a), get_assembly_n50(b)
+            if n50_a >= n50_b:
+                keep, discard = a, b
             else:
-                print(f'  {os.path.basename(most_distant)}')
-            derep_assemblies.add(most_distant)
-            remaining_assemblies.remove(most_distant)
+                keep, discard = b, a
+            assemblies.remove(discard)
 
-    return sorted(derep_assemblies)
+            if args.verbose:
+                a_name, b_name = os.path.basename(a), os.path.basename(b)
+                distance = pairwise_distances[(a, b)]
+                print(f'{a_name} (N50={n50_a}) vs {b_name} (N50={n50_b}), distance={distance}')
+            print(f'  discarding {os.path.basename(discard)}')
+    return assemblies
+
+
+def find_minimum_distance_pair(assemblies, pairwise_distances):
+    """
+    Given a set of assemblies and a dictionary of their pairwise distances, this function returns
+    the pair with the lowest pairwise distance. In the case of a tie, the lexicographically first
+    pair is returned.
+    """
+    min_distance = float('inf')
+    for a in assemblies:
+        for b in assemblies:
+            if a != b:
+                distance = pairwise_distances[(a, b)]
+                if distance < min_distance:
+                    min_distance = distance
+    min_distance_pairs = []
+    for a in assemblies:
+        for b in assemblies:
+            if a != b:
+                distance = pairwise_distances[(a, b)]
+                if distance == min_distance:
+                    min_distance_pairs.append((a, b))
+    return sorted(min_distance_pairs)[0]
 
 
 def copy_to_output_dir(derep_assemblies, initial_count, args):
-    print(f'\nFinal dereplication: {len(derep_assemblies):,} / {initial_count:,} assemblies')
+    print(f'\nDereplication: {len(derep_assemblies):,} / {initial_count:,} assemblies')
     print(f'Copying dereplicated assemblies to {args.out_dir}')
     for a in derep_assemblies:
         shutil.copy(a, args.out_dir)
     print()
-
-
-def choose_starting_assembly(all_assemblies, pairwise_distances):
-    """
-    Returns the assembly with the lowest total sum of distances to the other assemblies. I.e. it
-    chooses an assembly that is more central to the group, not a distant outlier.
-    """
-    total_distances = {a: sum(pairwise_distances[(a, b)] for b in all_assemblies)
-                       for a in all_assemblies}
-    starting_assembly = min(total_distances, key=total_distances.get)
-    return starting_assembly
 
 
 def build_mash_sketch(assemblies, threads, temp_dir, sketch_size):
