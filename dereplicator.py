@@ -82,8 +82,6 @@ def main(args=None):
 def check_args(args):
     if args.threshold is None and args.count is None:
         sys.exit('Error: you must supply a value for either --threshold or --count')
-    if args.threshold is not None and args.count is not None:
-        sys.exit('Error: you cannot use both --threshold and --count')
     if args.threshold is not None and (args.threshold <= 0.0 or args.threshold >= 1.0):
         sys.exit('Error: --threshold must be greater than 0 and less than 1')
     if args.count is not None and (args.count <= 0):
@@ -103,14 +101,8 @@ def dereplication(all_assemblies, args):
     print(f'Running dereplication on {len(all_assemblies)} assemblies:')
     assemblies, discarded = set(all_assemblies), set()
     pairwise_distances = pairwise_mash_distances(all_assemblies, args.threads, args.sketch_size)
-    while True:
-        if len(assemblies) == 1:
-            break
-        if args.count is not None and len(assemblies) <= args.count:
-            break
+    while not stop(args.count, args.threshold, assemblies, pairwise_distances):
         distance, a, b = pairwise_distances[-1]
-        if args.threshold is not None and distance >= args.threshold:
-            break
         pairwise_distances.pop()
         if a in discarded or b in discarded:
             continue
@@ -123,6 +115,21 @@ def dereplication(all_assemblies, args):
             print(f'{a_name} (N50={n50_a}) vs {b_name} (N50={n50_b}), distance={distance}')
         print(f'  discarding {os.path.basename(discard)}')
     return assemblies
+
+
+def stop(count, threshold, assemblies, pairwise_distances):
+    """
+    Tests whether the dereplication loop should stop, this can be triggered by:
+    * only assembly is left
+    * the user supplied only --count and the assembly count has reached that value
+    * the user supplied only --threshold and the closest pair's distance has reached that value
+    * the user supplied both --count and --threshold and both values have been reached
+    """
+    if len(assemblies) == 1:
+        return True
+    count_condition = (count is None or len(assemblies) <= count)
+    threshold_condition = (threshold is None or pairwise_distances[-1][0] >= threshold)
+    return count_condition and threshold_condition
 
 
 def copy_to_output_dir(derep_assemblies, initial_count, args):

@@ -327,6 +327,31 @@ def test_count_dereplication_9():
         assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
 
 
+def test_threshold_and_count_dereplication_1():
+    """
+    When both --threshold and --count are used both conditions must be satisfied.
+    """
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.0001', '--count', '2', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
+
+
+def test_threshold_and_count_dereplication_2():
+    """
+    When both --threshold and --count are used both conditions must be satisfied.
+    """
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--threshold', '0.004', '--count', '6', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz']
+
+
 def test_help_1():
     with pytest.raises(SystemExit) as sysexit:
         dereplicator.main(['--help'])
@@ -343,8 +368,6 @@ def test_check_args():
     Args = collections.namedtuple('Args', ['in_dir', 'out_dir', 'threshold', 'count'])
     with pytest.raises(SystemExit):
         dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=None, count=None))
-    with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=0.001, count=100))
     with pytest.raises(SystemExit):
         dereplicator.check_args(Args(in_dir='in', out_dir='out', threshold=0.0, count=None))
     with pytest.raises(SystemExit):
