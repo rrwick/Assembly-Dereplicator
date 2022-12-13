@@ -206,8 +206,8 @@ def test_count_dereplication_3():
         dereplicator.main(['--count', '3', '--verbose', in_dir, out_dir])
         derep_assembles = sorted(glob.glob(out_dir + '/*'))
         derep_assembles = [os.path.basename(a) for a in derep_assembles]
-        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003214255.1.fna.gz',
-                                   'GCF_003215395.1.fna.gz']
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003214135.1.fna.gz',
+                                   'GCF_003214255.1.fna.gz']
 
 
 def test_count_dereplication_4():

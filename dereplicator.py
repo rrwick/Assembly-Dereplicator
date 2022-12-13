@@ -136,12 +136,12 @@ def count_based_dereplication(all_assemblies, args):
         derep_assemblies = {starting_assembly}
         remaining_assemblies.remove(starting_assembly)
         while remaining_assemblies and len(derep_assemblies) < args.count:
-            total_distances = {a: sum(pairwise_distances[(a, b)] for b in derep_assemblies)
-                               for a in remaining_assemblies}
-            most_distant = max(total_distances, key=total_distances.get)
+            min_distances = {a: min(pairwise_distances[(a, b)] for b in derep_assemblies)
+                             for a in remaining_assemblies}
+            most_distant = max(min_distances, key=min_distances.get)
             if args.verbose:
-                mean_distance = total_distances[most_distant] / len(derep_assemblies)
-                print(f'  {os.path.basename(most_distant)} (mean distance = {mean_distance:.6f})')
+                print(f'  {os.path.basename(most_distant)}'
+                      f' (distance = {min_distances[most_distant]:.6f})')
             else:
                 print(f'  {os.path.basename(most_distant)}')
             derep_assemblies.add(most_distant)
