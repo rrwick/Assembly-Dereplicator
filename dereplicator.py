@@ -158,14 +158,15 @@ def copy_to_output_dir(derep_assemblies, args):
 
 
 def find_all_assemblies(in_dir):
-    print(f'\nLooking for assembly files in {in_dir}:')
+    print(f'\nLooking for assembly files in {in_dir}...', flush=True, end='')
     all_assemblies = [str(x) for x in sorted(pathlib.Path(in_dir).glob('**/*'))
                       if x.is_file()]
     all_assemblies = [x for x in all_assemblies if
                       x.endswith('.fasta') or x.endswith('.fasta.gz') or
                       x.endswith('.fna') or x.endswith('.fna.gz') or
                       x.endswith('.fa') or x.endswith('.fa.gz')]
-    print(f'  found {len(all_assemblies):,} files')
+    plural = 'assembly' if len(all_assemblies) == 1 else 'assemblies'
+    print(f' found {len(all_assemblies)} {plural}')
     return sorted(all_assemblies)
 
 
