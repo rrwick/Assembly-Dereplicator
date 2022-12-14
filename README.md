@@ -24,11 +24,16 @@ __Ryan R. Wick<sup>1</sup> and Kathryn E. Holt<sup>1,2</sup>__
 
 ## Introduction
 
-This repo contains a stand-alone Python script ([`dereplicator.py`](dereplicator.py)) to solve a problem I occasionally run into: dereplicating a group of bacterial genome assemblies. Dereplication means removing assemblies for which there are sufficiently close relatives, resulting in a smaller set where the assemblies are more unique.
-
-<p align="center"><img src="images/trees.png" alt="Trees" width="70%"></p>
+This repo contains a standalone Python script ([`dereplicator.py`](dereplicator.py)) to solve a problem I occasionally run into: dereplicating a group of bacterial genome assemblies. Dereplication means removing assemblies for which there are sufficiently close relatives, resulting in a smaller set where the assemblies are more unique.
 
 As an example, imagine you have 10000 genome assemblies for a particular taxon and want to do some analysis on them, maybe building a pan genome. You know there is redundancy in this set because some of the genomes come from outbreaks and are nearly identical to each other. So instead of doing the analysis on all 10000 assemblies, you can dereplicate them to a smaller set (i.e. remove near-identical redundant genomes) so your analysis will be faster.
+
+
+## Example
+
+<p align="center"><picture><source srcset="images/trees-dark.png" media="(prefers-color-scheme: dark)"><img src="images/trees.png" alt="Verticall trees" width="90%"></picture></p>
+
+To give you a visual idea of how this works, here are trees built from 1000 assemblies from the genus _Klebsiella_ dereplicated to various distance levels. You can see that in the no-dereplication and lower-distance trees, one clade dominates (corresponding to _K. pneumoniae_, the most sequenced species in the genus). The higher-distance trees are more balanced, and when dereplicated to a distance of 0.025, there is only one assembly per species/subspecies.
 
 
 
@@ -68,6 +73,8 @@ There are two possible criteria for defining how much to dereplicate:
 * An assembly count, e.g. `--count 100`.  This will make dereplication continue until the target number of assemblies is reached.
 
 If both criteria are used, then dereplication will continue until both are satisfied. E.g. `--distance 0.001 --count 100` will ensure that no two assemblies have a Mash distance of greater than 0.001 and there are no more than 100 assemblies.
+
+The process is deterministic, so running the script multiple times will give the same result. Also, running the script in multiple steps (e.g. first with `--distance 0.01` then again with `--distance 0.02`) will give the same result as running in a single step (e.g. using `--distance 0.02` the first time).
 
 
 
