@@ -14,8 +14,6 @@ __Ryan R. Wick<sup>1</sup> and Kathryn E. Holt<sup>1,2</sup>__
 * [Requirements](#requirements)
 * [Installation](#installation)
 * [Method](#method)
-   * [Clustering](#clustering)
-   * [Batches](#batches)
 * [Quick usage](#quick-usage)
 * [Full usage](#full-usage)
 * [License](#license)
