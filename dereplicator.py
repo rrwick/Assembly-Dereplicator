@@ -28,7 +28,7 @@ import subprocess
 import sys
 import tempfile
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 
 def get_arguments(args):
@@ -177,6 +177,7 @@ def pairwise_mash_distances(assemblies, threads, sketch_size):
     """
     print('\nRunning Mash to get all pairwise distances...', flush=True, end='')
     with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = pathlib.Path(temp_dir)
         mash_sketch = build_mash_sketch(assemblies, threads, temp_dir, sketch_size)
         mash_command = ['mash', 'dist', '-p', str(threads), mash_sketch, mash_sketch]
         distances = []
@@ -196,10 +197,14 @@ def pairwise_mash_distances(assemblies, threads, sketch_size):
 
 
 def build_mash_sketch(assemblies, threads, temp_dir, sketch_size):
-    mash_command = ['mash', 'sketch', '-p', str(threads), '-o', temp_dir + '/mash',
-                    '-s', str(sketch_size)] + assemblies
+    fofn = temp_dir / 'input.fofn'
+    with open(fofn, 'wt') as f:
+        for a in assemblies:
+            f.write(f'{a}\n')
+    mash_command = ['mash', 'sketch', '-p', str(threads), '-o', temp_dir / 'mash',
+                    '-s', str(sketch_size), '-l', fofn]
     subprocess.run(mash_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    return temp_dir + '/mash.msh'
+    return temp_dir / 'mash.msh'
 
 
 @functools.lru_cache(maxsize=None)

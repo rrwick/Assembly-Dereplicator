@@ -37,7 +37,7 @@ To give you a visual idea of how this works, here are trees built from 1000 asse
 
 ## Requirements
 
-You'll need [Python](https://www.python.org/) 3.6 or later to run `dereplicator.py`. It's a standalone script and has no Python package dependencies (i.e. it only uses the standard library).
+You'll need [Python](https://www.python.org/) 3.8 or later to run `dereplicator.py`. It's a standalone script and has no Python package dependencies (i.e. it only uses the standard library).
 
 There is one external dependency, [Mash](https://github.com/marbl/Mash), which you'll need installed and callable on your command line. If you can run `mash sketch -h` and `mash dist -h` without getting an error, you should be good to go!
 
