@@ -167,6 +167,8 @@ def find_all_assemblies(in_dir):
                       x.endswith('.fa') or x.endswith('.fa.gz')]
     plural = 'assembly' if len(all_assemblies) == 1 else 'assemblies'
     print(f' found {len(all_assemblies)} {plural}')
+    if len(all_assemblies) == 0:
+        sys.exit(f'Error: no assemblies found in {in_dir}')
     return sorted(all_assemblies)
 
 
