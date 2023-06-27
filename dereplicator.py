@@ -16,7 +16,6 @@ see <https://www.gnu.org/licenses/>.
 """
 
 import argparse
-import collections
 import functools
 import gzip
 import multiprocessing
@@ -30,6 +29,39 @@ import tempfile
 
 __version__ = '0.3.1'
 
+class OpenRange(object):
+    """An open range (interval) does NOT include the end points"""
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+    def __eq__(self, other):
+        return self.start < other < self.end
+    def __contains__(self, item):
+        return self.__eq__(item)
+    def __iter__(self):
+        yield self
+    def __repr__(self):
+        return '({0},{1})'.format(self.start, self.end)
+
+class HalfOpenRange(object):
+    """Half-open range (interval) does NOT include the start point"""
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+    def __eq__(self, other):
+        return self.start < other <= self.end
+    def __contains__(self, item):
+        return self.__eq__(item)
+    def __iter__(self):
+        yield self
+    def __repr__(self):
+        return '({0},{1}]'.format(self.start, self.end)
+
+def check_positive(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError(f"{value} is an invalid positive int value")
+    return ivalue
 
 def get_arguments(args):
     parser = MyParser(description='Assembly Dereplicator', add_help=False,
@@ -42,12 +74,27 @@ def get_arguments(args):
                                help='Directory where dereplicated assemblies will be copied')
 
     clustering_args = parser.add_argument_group('Dereplication target')
-    clustering_args.add_argument('--distance', type=float,
-                                 help='Dereplicate until the closest pair has a Mash distance of '
-                                      'this value or greater')
-    clustering_args.add_argument('--count', type=int,
-                                 help='Dereplicate until there are no more than this many '
-                                      'assemblies')
+    mxg = clustering_args.add_mutually_exclusive_group(required=True)
+    mxg.add_argument(
+        "-d",
+        '--distance',
+        type=float,
+        choices=OpenRange(0.0, 1.0),
+        help='Dereplicate until the closest pair has a Mash distance of this value or greater'
+    )
+    mxg.add_argument(
+        "-c",
+        '--count',
+        type=check_positive,
+        help='Dereplicate until there are no more than this many assemblies'
+    )
+    mxg.add_argument(
+        "-f",
+        "--fraction",
+        type=float,
+        choices=HalfOpenRange(0.0, 1.0),
+        help="Dereplicate until there are no more than this fraction of the original number of assemblies"
+    )
 
     setting_args = parser.add_argument_group('Settings')
     setting_args.add_argument('--sketch_size', type=int, default=10000,
@@ -70,21 +117,11 @@ def get_arguments(args):
 
 def main(args=None):
     args = get_arguments(args)
-    check_args(args)
     random.seed(0)
     all_assemblies = find_all_assemblies(args.in_dir)
     os.makedirs(args.out_dir, exist_ok=True)
     derep_assemblies = dereplication(all_assemblies, args)
     copy_to_output_dir(derep_assemblies, args)
-
-
-def check_args(args):
-    if args.distance is None and args.count is None:
-        sys.exit('Error: you must supply a value for either --distance or --count')
-    if args.distance is not None and (args.distance <= 0.0 or args.distance >= 1.0):
-        sys.exit('Error: --distance must be greater than 0 and less than 1')
-    if args.count is not None and (args.count <= 0):
-        sys.exit('Error: --count must be greater than 0')
 
 
 def dereplication(all_assemblies, args):
