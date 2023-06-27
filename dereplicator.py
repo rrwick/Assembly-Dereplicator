@@ -95,8 +95,8 @@ def get_arguments(args):
     )
 
     clustering_args = parser.add_argument_group("Dereplication target")
-    mxg = clustering_args.add_mutually_exclusive_group(required=True)
-    mxg.add_argument(
+    mxg = clustering_args.add_mutually_exclusive_group(required=False)
+    clustering_args.add_argument(
         "-d",
         "--distance",
         type=float,
@@ -147,6 +147,7 @@ def get_arguments(args):
     )
 
     args = parser.parse_args(args)
+    check_args(args)
     return args
 
 
@@ -159,6 +160,13 @@ def main(args=None):
     copy_to_output_dir(derep_assemblies, args)
 
 
+def check_args(args):
+    if args.distance is None and args.count is None and args.fraction is None:
+        sys.exit(
+            "Error: you must supply a value for either --distance, --count, or --fraction"
+        )
+
+
 def dereplication(all_assemblies, args):
     """
     Runs dereplication by:
@@ -166,7 +174,7 @@ def dereplication(all_assemblies, args):
     * discarding the assembly in the pair with the lower N50
     * repeating until one of the following conditions is met:
       * there is only one assembly left
-      * the assembly count has reached the user-supplied --count
+      * the assembly count has reached the user-supplied --count/--fraction
       * the closest pair's distance has reached the user-supplied --distance
     """
     assemblies, discarded = set(all_assemblies), set()
@@ -174,7 +182,14 @@ def dereplication(all_assemblies, args):
         all_assemblies, args.threads, args.sketch_size
     )
     print(f"\nRunning dereplication on {len(all_assemblies)} assemblies:")
-    while not stop(args.count, args.distance, assemblies, pairwise_distances):
+
+    count = None
+    if args.fraction is not None:
+        count = max(round(len(all_assemblies) * args.fraction), 1)
+    elif args.count is not None:
+        count = args.count
+
+    while not stop(count, args.distance, assemblies, pairwise_distances):
         distance, a, b = pairwise_distances[-1]
         pairwise_distances.pop()
         if a in discarded or b in discarded:
@@ -208,6 +223,7 @@ def stop(count, distance, assemblies, pairwise_distances):
     if len(assemblies) == 1:
         print("\nStop condition reached: 1 assembly remains")
         return True
+
     if distance is None and len(assemblies) <= count:
         plural = "assembly remains" if len(assemblies) == 1 else "assemblies remain"
         print(f"\nStop condition reached: {len(assemblies)} {plural}")
