@@ -399,6 +399,18 @@ def test_count_dereplication_9():
         assert derep_assembles == ["GCF_003213775.1.fna.gz", "GCF_003215265.1.fna.gz"]
 
 
+def test_fraction_dereplication_1():
+    """
+    When given a fraction close to zero, the highest N50 assembly will be returned.
+    """
+    in_dir = str(pathlib.Path(__file__).resolve().parent / "sulcia_muelleri")
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(["--fraction", "0.0000001", in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + "/*"))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ["GCF_003215265.1.fna.gz"]
+
+
 def test_distance_and_count_dereplication_1():
     """
     When both --distance and --count are used both conditions must be satisfied.
@@ -440,32 +452,47 @@ def test_help_2():
 
 
 def test_check_args():
-    Args = collections.namedtuple("Args", ["in_dir", "out_dir", "distance", "count"])
+    Args = collections.namedtuple(
+        "Args", ["in_dir", "out_dir", "distance", "count", "fraction"]
+    )
     with pytest.raises(SystemExit):
         dereplicator.check_args(
-            Args(in_dir="in", out_dir="out", distance=None, count=None)
-        )
-    with pytest.raises(SystemExit):
-        dereplicator.check_args(
-            Args(in_dir="in", out_dir="out", distance=0.0, count=None)
-        )
-    with pytest.raises(SystemExit):
-        dereplicator.check_args(
-            Args(in_dir="in", out_dir="out", distance=-0.1, count=None)
-        )
-    with pytest.raises(SystemExit):
-        dereplicator.check_args(
-            Args(in_dir="in", out_dir="out", distance=2.0, count=None)
-        )
-    with pytest.raises(SystemExit):
-        dereplicator.check_args(
-            Args(in_dir="in", out_dir="out", distance=None, count=0)
-        )
-    with pytest.raises(SystemExit):
-        dereplicator.check_args(
-            Args(in_dir="in", out_dir="out", distance=None, count=-1)
+            Args(in_dir="in", out_dir="out", distance=None, count=None, fraction=None)
         )
     dereplicator.check_args(
-        Args(in_dir="in", out_dir="out", distance=0.001, count=None)
+        Args(in_dir="in", out_dir="out", distance=0.001, count=None, fraction=None)
     )
-    dereplicator.check_args(Args(in_dir="in", out_dir="out", distance=None, count=100))
+    dereplicator.check_args(
+        Args(in_dir="in", out_dir="out", distance=None, count=100, fraction=None)
+    )
+    dereplicator.check_args(
+        Args(in_dir="in", out_dir="out", distance=None, count=None, fraction=0.1)
+    )
+
+
+def test_get_arguments():
+    with pytest.raises(SystemExit):
+        dereplicator.get_arguments(["-d 0.0", "in_dir", "out_dir"])
+    with pytest.raises(SystemExit):
+        dereplicator.get_arguments(["-d -0.1", "in_dir", "out_dir"])
+    with pytest.raises(SystemExit):
+        dereplicator.get_arguments(["-d 2.0", "in_dir", "out_dir"])
+    with pytest.raises(SystemExit):
+        dereplicator.get_arguments(["-c 0", "in_dir", "out_dir"])
+    with pytest.raises(SystemExit):
+        dereplicator.get_arguments(["-c -1", "in_dir", "out_dir"])
+    with pytest.raises(SystemExit):
+        dereplicator.get_arguments(["-c -1", "in_dir", "out_dir"])
+    with pytest.raises(SystemExit):
+        dereplicator.get_arguments(["-f 0.0", "in_dir", "out_dir"])
+
+    args = dereplicator.get_arguments(["-d 0.1", "in_dir", "out_dir"])
+    assert args.distance == 0.1
+    args = dereplicator.get_arguments(["-f 0.1", "in_dir", "out_dir"])
+    assert args.fraction == 0.1
+    args = dereplicator.get_arguments(["-d 0.1", "-f 0.1", "in_dir", "out_dir"])
+    assert args.fraction == 0.1 and args.distance == 0.1
+    args = dereplicator.get_arguments(["-c 2", "in_dir", "out_dir"])
+    assert args.count == 2
+    args = dereplicator.get_arguments(["-d 0.1", "-c 2", "in_dir", "out_dir"])
+    assert args.count == 2 and args.distance == 0.1
