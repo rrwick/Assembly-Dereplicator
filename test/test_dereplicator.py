@@ -411,6 +411,57 @@ def test_fraction_dereplication_1():
         assert derep_assembles == ["GCF_003215265.1.fna.gz"]
 
 
+def test_fraction_dereplication_2():
+    """
+    When given a fraction 1.0 set, all assemblies will be returned.
+    """
+    in_dir = str(pathlib.Path(__file__).resolve().parent / "sulcia_muelleri")
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(["--fraction", "1.0", in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + "/*"))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == [
+            "GCF_003213775.1.fna.gz",
+            "GCF_003213895.1.fna.gz",
+            "GCF_003214135.1.fna.gz",
+            "GCF_003214255.1.fna.gz",
+            "GCF_003214655.1.fna.gz",
+            "GCF_003215265.1.fna.gz",
+            "GCF_003215395.1.fna.gz",
+            "GCF_003215515.1.fna.gz",
+        ]
+
+
+def test_fraction_dereplication_3():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / "sulcia_muelleri")
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(["--fraction", str(7 / 8), in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + "/*"))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == [
+            "GCF_003213775.1.fna.gz",
+            "GCF_003213895.1.fna.gz",
+            "GCF_003214135.1.fna.gz",
+            "GCF_003214655.1.fna.gz",
+            "GCF_003215265.1.fna.gz",
+            "GCF_003215395.1.fna.gz",
+            "GCF_003215515.1.fna.gz",
+        ]
+
+
+def test_fraction_dereplication_4():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / "sulcia_muelleri")
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(["--fraction", str(3 / 8), in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + "/*"))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == [
+            "GCF_003213775.1.fna.gz",
+            "GCF_003215265.1.fna.gz",
+            "GCF_003215395.1.fna.gz",
+        ]
+
+
 def test_distance_and_count_dereplication_1():
     """
     When both --distance and --count are used both conditions must be satisfied.
