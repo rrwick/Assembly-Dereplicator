@@ -456,6 +456,23 @@ def test_distance_and_count_and_fraction_dereplication_3():
                                    'GCF_003215395.1.fna.gz']
 
 
+def test_verbose_dereplication():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--distance', '0.004', '--verbose', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz']
+
+
+def test_no_assemblies():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'compression')
+    with tempfile.TemporaryDirectory() as out_dir:
+        with pytest.raises(SystemExit) as sysexit:
+            dereplicator.main(['--distance', '0.01', in_dir, out_dir])
+
+
 def test_help_1():
     with pytest.raises(SystemExit) as sysexit:
         dereplicator.main(['--help'])
