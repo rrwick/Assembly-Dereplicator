@@ -352,6 +352,110 @@ def test_distance_and_count_dereplication_2():
                                    'GCF_003215395.1.fna.gz']
 
 
+def test_fraction_dereplication_1():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--fraction', '0.5', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003215265.1.fna.gz', 'GCF_003215395.1.fna.gz']
+
+
+def test_fraction_dereplication_2():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--fraction', '0.75', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003214655.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz', 'GCF_003215515.1.fna.gz']
+
+
+def test_fraction_dereplication_3():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--fraction', '0.25', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
+
+
+def test_fraction_dereplication_4():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--fraction', '0.000001', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003215265.1.fna.gz']
+
+
+def test_count_and_fraction_dereplication_1():
+    """
+    When both --count and --fraction are used, the end condition is the lower number.
+    """
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--count', '2', '--fraction', '0.9', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
+
+
+def test_count_and_fraction_dereplication_2():
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--count', '7', '--fraction', '0.5', in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003213895.1.fna.gz',
+                                   'GCF_003215265.1.fna.gz', 'GCF_003215395.1.fna.gz']
+
+
+def test_distance_and_count_and_fraction_dereplication_1():
+    """
+    When both --distance, --count and --fraction are all used, both distance and count/fraction
+    (whichever is lower) must be satisfied.
+    """
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--distance', '0.000001', '--count', '2', '--fraction', '0.9',
+                           in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz']
+
+
+def test_distance_and_count_and_fraction_dereplication_2():
+    """
+    When both --distance, --count and --fraction are all used, both distance and count/fraction
+    (whichever is lower) must be satisfied.
+    """
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--distance', '0.000001', '--count', '10', '--fraction', '0.125',
+                           in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003215265.1.fna.gz']
+
+
+def test_distance_and_count_and_fraction_dereplication_3():
+    """
+    When both --distance, --count and --fraction are all used, both distance and count/fraction
+    (whichever is lower) must be satisfied.
+    """
+    in_dir = str(pathlib.Path(__file__).resolve().parent / 'sulcia_muelleri')
+    with tempfile.TemporaryDirectory() as out_dir:
+        dereplicator.main(['--distance', '0.004', '--count', '10', '--fraction', '0.9',
+                           in_dir, out_dir])
+        derep_assembles = sorted(glob.glob(out_dir + '/*'))
+        derep_assembles = [os.path.basename(a) for a in derep_assembles]
+        assert derep_assembles == ['GCF_003213775.1.fna.gz', 'GCF_003215265.1.fna.gz',
+                                   'GCF_003215395.1.fna.gz']
+
+
 def test_help_1():
     with pytest.raises(SystemExit) as sysexit:
         dereplicator.main(['--help'])
@@ -365,18 +469,23 @@ def test_help_2():
 
 
 def test_check_args():
-    Args = collections.namedtuple('Args', ['in_dir', 'out_dir', 'distance', 'count'])
+    Args = collections.namedtuple('Args', ['in_dir', 'out_dir', 'distance', 'count', 'fraction'])
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=None))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=None, fraction=None))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=0.0, count=None))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=0.0, count=None, fraction=None))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=-0.1, count=None))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=-0.1, count=None, fraction=None))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=2.0, count=None))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=2.0, count=None, fraction=None))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=0))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=0, fraction=None))
     with pytest.raises(SystemExit):
-        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=-1))
-    dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=0.001, count=None))
-    dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=100))
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=-1, fraction=None))
+    with pytest.raises(SystemExit):
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=None, fraction=-0.1))
+    with pytest.raises(SystemExit):
+        dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=None, fraction=2.0))
+    dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=0.001, count=None, fraction=None))
+    dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=100, fraction=None))
+    dereplicator.check_args(Args(in_dir='in', out_dir='out', distance=None, count=None, fraction=0.5))

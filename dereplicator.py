@@ -16,7 +16,6 @@ see <https://www.gnu.org/licenses/>.
 """
 
 import argparse
-import collections
 import functools
 import gzip
 import multiprocessing
@@ -28,7 +27,7 @@ import subprocess
 import sys
 import tempfile
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 
 def get_arguments(args):
@@ -48,6 +47,9 @@ def get_arguments(args):
     clustering_args.add_argument('--count', type=int,
                                  help='Dereplicate until there are no more than this many '
                                       'assemblies')
+    clustering_args.add_argument('--fraction', type=float,
+                                 help='Dereplicate until there are no more than this fraction of '
+                                      'the original number of assemblies')
 
     setting_args = parser.add_argument_group('Settings')
     setting_args.add_argument('--sketch_size', type=int, default=10000,
@@ -79,12 +81,14 @@ def main(args=None):
 
 
 def check_args(args):
-    if args.distance is None and args.count is None:
-        sys.exit('Error: you must supply a value for either --distance or --count')
+    if args.distance is None and args.count is None and args.fraction is None:
+        sys.exit('Error: you must supply a value for either --distance, --count or --fraction')
     if args.distance is not None and (args.distance <= 0.0 or args.distance >= 1.0):
         sys.exit('Error: --distance must be greater than 0 and less than 1')
     if args.count is not None and (args.count <= 0):
         sys.exit('Error: --count must be greater than 0')
+    if args.fraction is not None and (args.fraction <= 0.0 or args.fraction >= 1.0):
+        sys.exit('Error: --fraction must be greater than 0 and less than 1')
 
 
 def dereplication(all_assemblies, args):
@@ -99,6 +103,7 @@ def dereplication(all_assemblies, args):
     """
     assemblies, discarded = set(all_assemblies), set()
     pairwise_distances = pairwise_mash_distances(all_assemblies, args.threads, args.sketch_size)
+    set_count_from_fraction(args, len(all_assemblies))
     print(f'\nRunning dereplication on {len(all_assemblies)} assemblies:')
     while not stop(args.count, args.distance, assemblies, pairwise_distances):
         distance, a, b = pairwise_distances[-1]
@@ -123,10 +128,24 @@ def dereplication(all_assemblies, args):
     return assemblies
 
 
+def set_count_from_fraction(args, assembly_count):
+    """
+    If the user supplied --fraction, that is changed to a target count. If the user supplied both
+    --fraction and --count, then whichever is lower is used as the target count.
+    """
+    if args.fraction is None:
+        return
+    fraction_count = round(assembly_count * args.fraction)
+    if args.count is None:
+        args.count = fraction_count
+    else:
+        args.count = min(args.count, fraction_count)
+
+
 def stop(count, distance, assemblies, pairwise_distances):
     """
     Tests whether the dereplication loop should stop, this can be triggered by:
-    * only assembly is left
+    * only one assembly is left
     * the user supplied only --count and the assembly count has reached that value
     * the user supplied only --distance and the closest pair's distance has reached that value
     * the user supplied both --count and --distance and both values have been reached
