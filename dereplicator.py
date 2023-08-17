@@ -53,9 +53,9 @@ def get_arguments(args):
 
     setting_args = parser.add_argument_group('Settings')
     setting_args.add_argument('--sketch_size', type=int, default=10000,
-                              help='Mash assembly sketch size')
+                              help='Mash assembly sketch size (default: DEFAULT)')
     setting_args.add_argument('--threads', type=int, default=get_default_thread_count(),
-                              help='Number of CPU threads for Mash')
+                              help='Number of CPU threads for Mash (default: DEFAULT)')
     setting_args.add_argument('--verbose', action='store_true',
                               help='Display more output information')
 
@@ -328,9 +328,7 @@ class MyHelpFormatter(argparse.HelpFormatter):
         """
         help_text = action.help
         if action.default != argparse.SUPPRESS and action.default is not None:
-            if 'default' not in help_text.lower():
-                help_text += f' (default: {action.default})'
-            elif 'default: DEFAULT' in help_text:
+            if 'default: DEFAULT' in help_text:
                 help_text = help_text.replace('default: DEFAULT', f'default: {action.default}')
         return help_text
 

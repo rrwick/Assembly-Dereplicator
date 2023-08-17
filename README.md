@@ -66,7 +66,7 @@ If you'd like to double-check that everything works as intended, you can run thi
 
 The basic dereplication process is to find the closest pair of assemblies in the set, discard the assembly in that pair with the lower N50 value and repeat until a stop condition is reached. By using N50 as a metric of assembly quality, complete assemblies are preferentially kept over draft assemblies.
 
-There are three possible criteria for defining how much to dereplicate:
+There are three possible ways to specify how much to dereplicate:
 * A minimum pairwise distance, e.g. `--distance 0.001`. This will make dereplication continue until no two assemblies in the set have a Mash distance of less than the given value.
 * An assembly count, e.g. `--count 100`.  This will make dereplication continue until the target number of assemblies is reached.
 * An assembly fraction, e.g. `--fraction 0.5`.  This will make dereplication continue until the target fraction of assemblies is reached.
@@ -89,8 +89,9 @@ dereplicator.py --distance 0.01 assembly_dir output_dir
 ## Full usage
 
 ```
-usage: dereplicator.py [--distance DISTANCE] [--count COUNT] [--sketch_size SKETCH_SIZE]
-                       [--threads THREADS] [--verbose] [-h] [--version]
+usage: dereplicator.py [--distance DISTANCE] [--count COUNT] [--fraction FRACTION]
+                       [--sketch_size SKETCH_SIZE] [--threads THREADS] [--verbose] [-h]
+                       [--version]
                        in_dir out_dir
 
 Assembly Dereplicator
@@ -109,7 +110,7 @@ Dereplication target:
 Settings:
   --sketch_size SKETCH_SIZE  Mash assembly sketch size (default: 10000)
   --threads THREADS          Number of CPU threads for Mash (default: 10)
-  --verbose                  Display more output information (default: False)
+  --verbose                  Display more output information
 
 Other:
   -h, --help                 Show this help message and exit
