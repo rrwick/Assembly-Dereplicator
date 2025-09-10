@@ -158,12 +158,13 @@ def stop(count, distance, assemblies, pairwise_distances):
         print(f'\nStop condition reached: {len(assemblies)} {plural}')
         return True
     if count is None and pairwise_distances[-1][0] >= distance:
-        print(f'\nStop condition reached: closest pair distance ≥{distance}')
+        print(f'\nStop condition reached: closest pair distance >={distance}')
         return True
     if (distance is not None and count is not None
             and len(assemblies) <= count and pairwise_distances[-1][0] >= distance):
         plural = 'assembly remains' if count == 1 else 'assemblies remain'
-        print(f'\nStop condition reached: closest pair distance ≥{distance} and ≤{count} {plural}')
+        print(f'\nStop condition reached: closest pair distance >={distance} and '
+              f'<={count} {plural}')
         return True
     return False
 
