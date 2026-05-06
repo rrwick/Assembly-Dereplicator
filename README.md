@@ -4,7 +4,7 @@ __Ryan R. Wick<sup>1</sup> and Kathryn E. Holt<sup>1,2</sup>__
 <br>
 <sub>1. Department of Infectious Diseases, Central Clinical School, Monash University, Melbourne, Victoria 3004, Australia<br>2. London School of Hygiene & Tropical Medicine, London WC1E 7HT, UK</sub>
 
-[![Build Status](https://app.travis-ci.com/rrwick/Assembly-Dereplicator.svg?branch=main)](https://app.travis-ci.com/rrwick/Assembly-Dereplicator) [![License GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3365572.svg)](https://doi.org/10.5281/zenodo.3365572)
+[![Build Status](https://app.travis-ci.com/rrwick/Assembly-Dereplicator.svg?branch=main)](https://app.travis-ci.com/rrwick/Assembly-Dereplicator) [![License GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html) [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.3365571-blue.svg)](https://doi.org/10.5281/zenodo.3365571)
 
 
 
